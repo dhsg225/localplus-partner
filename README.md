@@ -27,4 +27,4 @@ npm run dev
 VITE_API_BASE_URL=https://api.localplus.city
 VITE_SUPABASE_URL=https://joknprahhqdhvdhzmuwl.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
+```# Test partner deployment
