@@ -1,2 +1,10 @@
 node_modules/
 .vercel
+
+# Environment files
+.env.local
+.env*.local
+
+# macOS
+.DS_Store
+**/.DS_Store
