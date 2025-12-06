@@ -2,9 +2,10 @@
 import { supabase } from './supabase'; // Use the central Supabase client
 
 // [2024-12-19] - Vercel API routes URL (production-ready)
+// [2025-11-29] - Updated to use clean branded API URL via Cloudflare Worker
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://localplus-v2.vercel.app' // Your Vercel domain
-  : 'http://localhost:3014'; // Partner app port for development
+  ? 'https://api.localplus.city' // Clean branded URL via Cloudflare Worker → API Gateway
+  : 'http://localhost:9004'; // Local API server port (per PORT_ALLOCATION_STANDARD.md)
 
 export interface Business {
   id: string;

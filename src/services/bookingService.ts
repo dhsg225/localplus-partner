@@ -1,4 +1,6 @@
 // [2024-09-26] - Updated to use API endpoints instead of direct Supabase
+// [2025-11-26] - Restored direct Supabase query for getBookings (original working implementation)
+import { supabase } from './supabase';
 import { apiService } from './apiService';
 
 export interface Booking {
@@ -20,16 +22,23 @@ export interface Booking {
 
 export const bookingService = {
   async getBookings(businessId: string, status?: Booking['status']): Promise<Booking[]> {
-    try {
-      console.log('[DEBUG] getBookings businessId:', businessId, 'status:', status);
-      
-      const response = await apiService.getBookings(businessId, status);
-      console.log('[DEBUG] getBookings data:', response.data);
-      return response.data || [];
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
-      throw error;
+    // [2025-11-26] - Restored original working implementation from shared/services/bookingService.ts.bak
+    let query = supabase
+      .from('bookings')
+      .select('*')
+      .eq('business_id', businessId)
+      .order('booking_date', { ascending: true })
+      .order('booking_time', { ascending: true });
+
+    if (status) {
+      query = query.eq('status', status);
     }
+
+    const { data, error } = await query;
+    console.log('[DEBUG] getBookings businessId:', businessId, 'status:', status, 'data:', data?.length || 0, 'error:', error);
+    
+    if (error) throw error;
+    return (data || []) as Booking[];
   },
 
   async confirmBooking(bookingId: string, businessId: string): Promise<Booking> {
@@ -84,9 +93,24 @@ export const bookingService = {
 
   async getPartnerRestaurants(): Promise<any[]> {
     try {
-      // Mock partner restaurants
-      console.log('[MOCK] Fetching partner restaurants');
-      return [{ id: '550e8400-e29b-41d4-a716-446655440000', name: 'Shannon\'s Coastal Kitchen' }];
+      // Get current user from Supabase auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error('Authentication required. Please log in to access partner restaurants.');
+      }
+
+      // Get restaurants this user has partner access to
+      const { data, error } = await supabase
+        .from('businesses')
+        .select(`*, partners!inner(id, role, permissions, is_active)`)
+        .eq('partners.user_id', user.id)
+        .eq('partners.is_active', true);
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error('No restaurants found for this partner account. Please contact support.');
+      }
+      return data;
     } catch (error) {
       console.error('Error fetching partner restaurants:', error);
       throw error;

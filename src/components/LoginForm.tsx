@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 // Removed shared component imports - using native HTML elements
 import { authService } from '../services/authService';
+import RegistrationForm from './RegistrationForm';
 
 interface LoginFormProps {
   onLogin: (user: any) => void;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
+  const [showRegistration, setShowRegistration] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,32 +20,32 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     setError('');
 
     try {
-      // [DEV BYPASS] For testing - create a dev user
-      if (email === 'shannon.green.asia@gmail.com' && password === 'test123') {
-        const devUser = {
-          id: 'dev-user-123',
-          email: 'shannon.green.asia@gmail.com',
-          firstName: 'Shannon',
-          lastName: 'Green',
-          businessId: '550e8400-e29b-41d4-a716-446655440000'
-        };
-        localStorage.setItem('partner_dev_user', JSON.stringify(devUser));
-        onLogin(devUser);
-        return;
+      // [2025-11-29] - authService.signIn returns { user, session } on success, throws on error
+      const result = await authService.signIn(email, password);
+      if (result.user) {
+        onLogin(result.user);
+      } else {
+        setError('Login failed - no user returned');
       }
-
-      const { user, error } = await authService.signIn(email, password);
-      if (error) {
-        setError(error.message);
-      } else if (user) {
-        onLogin(user);
-      }
-    } catch (err) {
-      setError('An unexpected error occurred');
+    } catch (err: any) {
+      // [2025-11-29] - Show actual error message from API
+      const errorMessage = err?.message || 'An unexpected error occurred';
+      console.error('[LoginForm] Sign in error:', err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
+  // [2025-12-05] - Show registration form if toggled
+  if (showRegistration) {
+    return (
+      <RegistrationForm
+        onRegister={onLogin}
+        onSwitchToLogin={() => setShowRegistration(false)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -53,7 +55,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             Partner Dashboard
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to manage your restaurant
+            Sign in to manage your business
           </p>
         </div>
         
@@ -103,6 +105,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setShowRegistration(true)}
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
+              Don't have an account? Create one
+            </button>
+          </div>
         </form>
       </div>
     </div>

@@ -1,15 +1,56 @@
 // [2024-09-26] - API service for Partner app - replaces shared dependencies
-const API_BASE_URL = process.env.VITE_API_BASE_URL || 'https://api.localplus.city';
+// [2025-11-26] - Fixed: Use import.meta.env instead of process.env for Vite
+// [2025-11-28 23:30] - Added Event Engine endpoints for listing and creating events
+// [2025-11-29] - Updated: API Gateway now includes /api/auth endpoint
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.localplus.city';
 
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     const token = localStorage.getItem('auth_token');
     
+    // [2025-11-29] - Debug logging to see actual URL being called
+    console.log('[ApiService] Request URL:', url);
+    console.log('[ApiService] API_BASE_URL:', API_BASE_URL);
+    
+    // [2025-11-30] - Debug: Log token info and decode to check algorithm
+    if (token) {
+      console.log('[ApiService] Token present, length:', token.length, 'starts with:', token.substring(0, 20) + '...');
+      
+      // [2025-11-30] - Decode token to check algorithm (for debugging token transformation)
+      try {
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          const header = JSON.parse(atob(tokenParts[0]));
+          const payload = JSON.parse(atob(tokenParts[1]));
+          console.log('[ApiService] Token algorithm (from frontend):', header.alg);
+          console.log('[ApiService] Token issuer (from frontend):', payload.iss);
+          console.log('[ApiService] Token email (from frontend):', payload.email);
+          console.log('[ApiService] Token sub (from frontend):', payload.sub);
+        }
+      } catch (e) {
+        console.warn('[ApiService] Could not decode token:', e);
+      }
+    } else {
+      console.warn('[ApiService] ⚠️ No token found in localStorage');
+    }
+    
+    // [2025-11-30] - Only send custom headers for events/all endpoint (to bypass token transformation)
+    // For other endpoints, use standard Authorization header to avoid CORS issues
+    const isEventsAllEndpoint = endpoint.includes('/events/all');
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token && { 
+          Authorization: `Bearer ${token}`,
+          // [2025-11-30] - WORKAROUND: Also send token in custom headers for events/all only
+          ...(isEventsAllEndpoint && {
+            'X-User-Token': token,
+            'X-Supabase-Token': token,
+            'X-Original-Authorization': `Bearer ${token}`
+          })
+        }),
         ...options.headers,
       },
       ...options,
@@ -17,14 +58,24 @@ class ApiService {
 
     const response = await fetch(url, config);
     
+    // [2025-11-29] - Better error handling to see actual error message
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+        console.error('[ApiService] Error response:', errorData);
+      } catch (e) {
+        // Response not JSON, use status text
+      }
+      throw new Error(errorMessage);
     }
     
     return response.json();
   }
 
   // Auth endpoints
+  // [2025-11-29] - Using API Gateway /api/auth endpoint
   async login(email: string, password: string) {
     return this.request('/api/auth', {
       method: 'POST',
@@ -33,7 +84,17 @@ class ApiService {
   }
 
   async getCurrentUser() {
-    return this.request('/api/auth/me');
+    return this.request('/api/auth', {
+      method: 'GET',
+    });
+  }
+
+  // [2025-12-05] - User registration with business type
+  async register(email: string, password: string, businessType: string, businessName: string) {
+    return this.request('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, business_type: businessType, business_name: businessName }),
+    });
   }
 
   async logout() {
@@ -85,14 +146,20 @@ class ApiService {
   async seatBooking(id: string) {
     return this.request(`/api/bookings/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ status: 'seated' }),
+      body: JSON.stringify({ 
+        status: 'seated',
+        seated_at: new Date().toISOString()
+      }),
     });
   }
 
   async completeBooking(id: string) {
     return this.request(`/api/bookings/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ status: 'completed' }),
+      body: JSON.stringify({ 
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      }),
     });
   }
 
@@ -112,6 +179,218 @@ class ApiService {
     return this.request('/api/notifications', {
       method: 'POST',
       body: JSON.stringify(preferences),
+    });
+  }
+
+  // Events endpoints - Event Engine Phase 1
+  async getEvents(params: {
+    businessId?: string;
+    status?: string;
+    eventType?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+    offset?: number;
+  } = {}) {
+    const searchParams = new URLSearchParams();
+
+    if (params.businessId) searchParams.set('businessId', params.businessId);
+    if (params.status) searchParams.set('status', params.status);
+    if (params.eventType) searchParams.set('eventType', params.eventType);
+    if (params.startDate) searchParams.set('startDate', params.startDate);
+    if (params.endDate) searchParams.set('endDate', params.endDate);
+
+    searchParams.set('limit', String(params.limit ?? 50));
+    searchParams.set('offset', String(params.offset ?? 0));
+
+    const query = searchParams.toString();
+    const endpoint = query ? `/api/events?${query}` : '/api/events';
+
+    return this.request(endpoint, {
+      method: 'GET',
+    });
+  }
+
+  async createEvent(eventData: any) {
+    return this.request('/api/events', {
+      method: 'POST',
+      body: JSON.stringify(eventData),
+    });
+  }
+
+  // [2025-12-05] - Get single event with recurrence rule
+  async getEvent(eventId: string) {
+    return this.request(`/api/events/${eventId}`, {
+      method: 'GET',
+    });
+  }
+
+  // [2025-12-05] - Update event with recurrence rules support
+  async updateEvent(eventId: string, eventData: any) {
+    return this.request(`/api/events/${eventId}`, {
+      method: 'PUT',
+      body: JSON.stringify(eventData),
+    });
+  }
+
+  // [2025-12-01] - Organizers endpoints
+  async getOrganizers() {
+    return this.request('/api/organizers', {
+      method: 'GET',
+    });
+  }
+
+  async createOrganizer(organizerData: {
+    name: string;
+    description?: string;
+    contact?: string;
+    address?: string;
+    image_url?: string;
+    website_url?: string;
+  }) {
+    return this.request('/api/organizers', {
+      method: 'POST',
+      body: JSON.stringify(organizerData),
+    });
+  }
+
+  // [2025-12-01] - Locations endpoints
+  async getLocations() {
+    return this.request('/api/locations', {
+      method: 'GET',
+    });
+  }
+
+  async createLocation(locationData: {
+    name: string;
+    description?: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+    map_url?: string;
+    image_url?: string;
+  }) {
+    return this.request('/api/locations', {
+      method: 'POST',
+      body: JSON.stringify(locationData),
+    });
+  }
+
+  // [2025-12-02] - Venues endpoints
+  async getVenues() {
+    return this.request('/api/venues', {
+      method: 'GET',
+    });
+  }
+
+  async createVenue(venueData: {
+    name: string;
+    description?: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+    map_url?: string;
+    image_url?: string;
+    venue_type?: string;
+    capacity?: number;
+  }) {
+    return this.request('/api/venues', {
+      method: 'POST',
+      body: JSON.stringify(venueData),
+    });
+  }
+
+  // [2025-11-29] - Superuser events endpoints (super admin only)
+  async getSuperuserEvents(params: {
+    limit?: number;
+    offset?: number;
+    city?: string;
+    businessId?: string;
+    category?: string;
+    status?: string;
+    eventType?: string;
+    createdBy?: string;
+    startDate?: string;
+    endDate?: string;
+    onlyUpcoming?: boolean;
+    onlyScraped?: boolean;
+    needsReview?: boolean;
+    sortBy?: 'start_time' | 'created_at' | 'title' | 'event_type' | 'status' | 'location' | 'organizer';
+    sortOrder?: 'asc' | 'desc';
+  } = {}) {
+    const searchParams = new URLSearchParams();
+    
+    if (params.limit) searchParams.set('limit', String(params.limit));
+    if (params.offset) searchParams.set('offset', String(params.offset));
+    if (params.city) searchParams.set('city', params.city);
+    if (params.businessId) searchParams.set('businessId', params.businessId);
+    if (params.category) searchParams.set('category', params.category);
+    if (params.status) searchParams.set('status', params.status);
+    if (params.eventType) searchParams.set('eventType', params.eventType);
+    if (params.createdBy) searchParams.set('createdBy', params.createdBy);
+    if (params.startDate) searchParams.set('startDate', params.startDate);
+    if (params.endDate) searchParams.set('endDate', params.endDate);
+    if (params.onlyUpcoming) searchParams.set('onlyUpcoming', 'true');
+    if (params.onlyScraped) searchParams.set('onlyScraped', 'true');
+    if (params.needsReview) searchParams.set('needsReview', 'true');
+    if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+
+    const query = searchParams.toString();
+    const endpoint = query ? `/api/events/all?${query}` : '/api/events/all';
+
+    return this.request(endpoint, {
+      method: 'GET',
+    });
+  }
+
+  async superuserUpdateEvent(eventId: string, updates: any, reason?: string) {
+    return this.request(`/api/events/all?id=${eventId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ ...updates, reason }),
+    });
+  }
+
+  async superuserDeleteEvent(eventId: string, reason?: string) {
+    return this.request(`/api/events/all?id=${eventId}`, {
+      method: 'DELETE',
+      body: reason ? JSON.stringify({ reason }) : undefined,
+    });
+  }
+
+  // [2025-12-02] - Activities endpoints
+  async getActivities() {
+    return this.request('/api/activities', {
+      method: 'GET',
+    });
+  }
+
+  async createActivity(activityData: any) {
+    return this.request('/api/activities', {
+      method: 'POST',
+      body: JSON.stringify(activityData),
+    });
+  }
+
+  // [2025-12-02] - Attractions endpoints
+  async getAttractions() {
+    return this.request('/api/attractions', {
+      method: 'GET',
+    });
+  }
+
+  async createAttraction(attractionData: any) {
+    return this.request('/api/attractions', {
+      method: 'POST',
+      body: JSON.stringify(attractionData),
+    });
+  }
+
+  // [2025-12-02] - DMO Dashboard endpoints
+  async getDMOStats() {
+    // TODO: Implement when API endpoint is ready
+    return this.request('/api/dmo/stats', {
+      method: 'GET',
     });
   }
 }

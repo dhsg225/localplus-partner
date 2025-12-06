@@ -1,0 +1,264 @@
+// [2025-12-02] - Modal for creating new attractions
+import React, { useState } from 'react';
+import { apiService } from '../services/apiService';
+
+interface CreateAttractionModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}
+
+const CreateAttractionModal: React.FC<CreateAttractionModalProps> = ({
+  visible,
+  onClose,
+  onSuccess
+}) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    subtitle: '',
+    attraction_type: '',
+    category: '',
+    address: '',
+    latitude: '',
+    longitude: '',
+    map_url: '',
+    hero_image_url: '',
+    admission_fee: '',
+    is_free: true,
+    status: 'draft',
+    is_featured: false
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (!formData.name.trim()) {
+        setError('Attraction name is required');
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.attraction_type) {
+        setError('Attraction type is required');
+        setLoading(false);
+        return;
+      }
+
+      const attractionData = {
+        name: formData.name.trim(),
+        description: formData.description || null,
+        subtitle: formData.subtitle || null,
+        attraction_type: formData.attraction_type,
+        category: formData.category || null,
+        address: formData.address || null,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        map_url: formData.map_url || null,
+        hero_image_url: formData.hero_image_url || null,
+        admission_fee: formData.admission_fee ? parseFloat(formData.admission_fee) : null,
+        is_free: formData.is_free,
+        status: formData.status,
+        is_featured: formData.is_featured,
+        managed_by_dmo: true
+      };
+
+      await apiService.createAttraction(attractionData);
+      
+      // Reset form
+      setFormData({
+        name: '',
+        description: '',
+        subtitle: '',
+        attraction_type: '',
+        category: '',
+        address: '',
+        latitude: '',
+        longitude: '',
+        map_url: '',
+        hero_image_url: '',
+        admission_fee: '',
+        is_free: true,
+        status: 'draft',
+        is_featured: false
+      });
+
+      onClose();
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (err: any) {
+      console.error('[CreateAttractionModal] Error creating attraction:', err);
+      setError(err?.message || 'Failed to create attraction. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div
+          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+          onClick={onClose}
+        />
+        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+          <form onSubmit={handleSubmit}>
+            <div className="bg-white px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Create New Attraction</h3>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white px-6 py-4 max-h-[70vh] overflow-y-auto">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Attraction Type *</label>
+                    <select
+                      value={formData.attraction_type}
+                      onChange={(e) => setFormData({ ...formData, attraction_type: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select type</option>
+                      <option value="beach">Beach</option>
+                      <option value="park">Park</option>
+                      <option value="viewpoint">Viewpoint</option>
+                      <option value="landmark">Landmark</option>
+                      <option value="natural">Natural</option>
+                      <option value="cultural">Cultural</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Admission Fee</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.admission_fee}
+                      onChange={(e) => setFormData({ ...formData, admission_fee: e.target.value })}
+                      disabled={formData.is_free}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                    />
+                  </div>
+
+                  <div className="flex items-center pt-6">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_free}
+                        onChange={(e) => setFormData({ ...formData, is_free: e.target.checked })}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-gray-700">Free admission</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.is_featured}
+                      onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">Featured attraction</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Hero Image URL</label>
+                  <input
+                    type="url"
+                    value={formData.hero_image_url}
+                    onChange={(e) => setFormData({ ...formData, hero_image_url: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
+              >
+                {loading ? 'Creating...' : 'Create Attraction'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CreateAttractionModal;
+

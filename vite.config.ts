@@ -12,6 +12,7 @@ export default defineConfig({
     },
   },
   server: {
+    port: 9003, // [2025-11-26] - Updated to match PORT_ALLOCATION_STANDARD.md
     fs: {
       // Allow serving files from one level up to the project root
       allow: ['..'],
