@@ -282,6 +282,19 @@ const Navigation: React.FC<NavigationProps> = ({
               </div>
             )}
 
+            {/* Admin Users Link */}
+            <button
+              onClick={() => onPageChange('admin')}
+              className={`text-sm whitespace-nowrap px-2 ${
+                currentPage === 'admin'
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+              title="View all users and partners"
+            >
+              👥 Users
+            </button>
+            
             {showAdminLink && (
               <a
                 href="https://admin-3c726yywc-shannons-projects-3f909922.vercel.app"
