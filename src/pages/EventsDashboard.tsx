@@ -24,6 +24,7 @@ const EventsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [duplicateEventData, setDuplicateEventData] = useState<any>(null); // [2025-12-07] - Event data for duplication
 
   // [2025-11-28 23:35] - Reuse business lookup pattern from BookingDashboard to scope events per partner
   // [2025-11-30] - Fixed: Use Supabase session directly instead of API call
@@ -114,17 +115,38 @@ const EventsDashboard: React.FC = () => {
       console.log('[EventsDashboard] Supabase auth.uid():', supabaseUser.id);
       console.log('[EventsDashboard] Session valid:', !!session);
 
-      // Query user_roles table to check for super_admin role
+      // [2025-01-XX] - Verify session is fully set before querying
+      // Wait a moment to ensure session propagation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Double-check session is still valid
+      const { data: { user: verifyUser }, error: verifyError } = await supabase.auth.getUser();
+      if (verifyError || !verifyUser) {
+        console.error('[EventsDashboard] Session lost after setSession:', verifyError);
+        return false;
+      }
+      console.log('[EventsDashboard] Verified session user ID:', verifyUser.id);
+
+      // [2025-01-XX] - Query user_roles table to check for super_admin OR events_superuser role
       // [2025-11-30] - RLS policies should allow this now that session is set
       // Using supabaseUser.id instead of user.id (from API)
+      console.log('[EventsDashboard] Querying user_roles for user_id:', supabaseUser.id);
+      console.log('[EventsDashboard] Session access_token present:', !!session?.access_token);
+      
+      // Try querying with explicit auth header
       const { data: roles, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', supabaseUser.id)
-        .eq('role', 'super_admin')
+        .in('role', ['super_admin', 'events_superuser'])
         .eq('is_active', true)
         .limit(1);
 
+      console.log('[EventsDashboard] Query result - data:', roles, 'error:', error);
+      if (error) {
+        console.error('[EventsDashboard] Full error object:', JSON.stringify(error, null, 2));
+      }
+      
       if (error) {
         console.error('[EventsDashboard] Error checking super admin role:', error);
         console.error('[EventsDashboard] Error code:', error.code);
@@ -207,6 +229,28 @@ const EventsDashboard: React.FC = () => {
   // [2025-12-01] - Handle create event success
   const handleCreateSuccess = async () => {
     await loadEvents();
+    setDuplicateEventData(null); // [2025-12-07] - Clear duplicate data after success
+  };
+
+  // [2025-12-07] - Handle duplicate event - fetch full event details and open modal
+  const handleDuplicateEvent = async (eventId: string) => {
+    try {
+      setLoading(true);
+      const response = await apiService.getEvent(eventId);
+      const eventData = response.data?.data || response.data;
+      
+      if (eventData) {
+        setDuplicateEventData(eventData);
+        setCreateModalVisible(true);
+      } else {
+        setError('Failed to load event details for duplication');
+      }
+    } catch (err: any) {
+      console.error('[EventsDashboard] Error loading event for duplication:', err);
+      setError(err?.message || 'Failed to load event details. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // If super admin, show superuser dashboard
@@ -270,7 +314,7 @@ const EventsDashboard: React.FC = () => {
                 className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <div>
+                  <div className="flex-1">
                     <h2 className="font-semibold text-gray-900">{event.title}</h2>
                     {event.description && (
                       <p className="text-sm text-gray-600 mt-1 line-clamp-2">
@@ -278,9 +322,23 @@ const EventsDashboard: React.FC = () => {
                       </p>
                     )}
                   </div>
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {event.event_type}
-                  </span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {event.event_type}
+                    </span>
+                    {/* [2025-12-07] - Duplicate button */}
+                    <button
+                      onClick={() => handleDuplicateEvent(event.id)}
+                      disabled={loading}
+                      className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50 flex items-center gap-1"
+                      title="Duplicate this event"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Duplicate
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-600 mt-2">
@@ -321,8 +379,12 @@ const EventsDashboard: React.FC = () => {
 
       <CreateEventModal
         visible={createModalVisible}
-        onClose={() => setCreateModalVisible(false)}
+        onClose={() => {
+          setCreateModalVisible(false);
+          setDuplicateEventData(null); // [2025-12-07] - Clear duplicate data when closing
+        }}
         onSuccess={handleCreateSuccess}
+        initialData={duplicateEventData} // [2025-12-07] - Pass duplicate data to modal
       />
     </div>
   );
