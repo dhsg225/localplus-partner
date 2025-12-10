@@ -132,8 +132,18 @@ const EventsDashboard: React.FC = () => {
       // Using supabaseUser.id instead of user.id (from API)
       console.log('[EventsDashboard] Querying user_roles for user_id:', supabaseUser.id);
       console.log('[EventsDashboard] Session access_token present:', !!session?.access_token);
+      console.log('[EventsDashboard] RLS policy should match: user_id = auth.uid()');
+      console.log('[EventsDashboard] Expected: user_id =', supabaseUser.id, 'auth.uid() =', verifyUser.id);
       
-      // Try querying with explicit auth header
+      // Test query: Try querying ALL roles first to see if RLS is working at all
+      const { data: allRoles, error: allRolesError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', supabaseUser.id);
+      
+      console.log('[EventsDashboard] Test query (all roles for user):', allRoles, 'error:', allRolesError);
+      
+      // Now query with filters
       const { data: roles, error } = await supabase
         .from('user_roles')
         .select('role')
