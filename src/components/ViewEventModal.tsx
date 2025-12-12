@@ -101,7 +101,39 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
     return placeholders[category] || placeholders.general;
   };
 
-  const displayImageUrl = event.hero_image_url || getPlaceholderImage(event.event_type);
+  // [2025-12-11] - Spread across multiple placeholders by event ID to avoid same image
+  const getHashedPlaceholder = (fallbackKey: string) => {
+    const pool = [
+      'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1464375117522-1311d6a5b81f?w=800&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=800&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1438557068880-c5f474830377?w=800&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop'
+    ];
+    const key = fallbackKey || 'general';
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) {
+      hash = (hash << 5) - hash + key.charCodeAt(i);
+      hash |= 0;
+    }
+    const idx = Math.abs(hash) % pool.length;
+    return pool[idx];
+  };
+
+  // [2025-12-11] - Prefer real images from multiple fields, then category placeholder, then hashed fallback
+  const displayImageUrl =
+    event.hero_image_url ||
+    (event as any).image_url ||
+    event.metadata?.featured_image_url ||
+    event.metadata?.featured_image ||
+    event.metadata?.image_url ||
+    event.metadata?.image ||
+    event.metadata?.banner_image ||
+    event.metadata?.thumbnail_url ||
+    event.metadata?.thumbnail ||
+    getPlaceholderImage(event.event_type) ||
+    getHashedPlaceholder(event.id || event.title || '');
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
