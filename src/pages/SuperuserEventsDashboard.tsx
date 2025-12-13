@@ -108,6 +108,7 @@ const SuperuserEventsDashboard: React.FC = () => {
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
   const [createOrganizerModalVisible, setCreateOrganizerModalVisible] = useState(false);
   const [createLocationModalVisible, setCreateLocationModalVisible] = useState(false);
+  const [duplicateEventData, setDuplicateEventData] = useState<any>(null); // [2025-12-07] - Event data for duplication
 
   // [2025-11-30] - Check if user is super admin using Supabase session directly
   // Fixed: Use Supabase session instead of API call to avoid "Invalid or expired token" errors
@@ -137,32 +138,67 @@ const SuperuserEventsDashboard: React.FC = () => {
         return false;
       }
 
-      // Get user from Supabase session (not API)
+      // [2025-01-XX] - Get user from Supabase session (not API)
       const { data: { user: supabaseUser }, error: userError } = await supabase.auth.getUser();
       if (userError || !supabaseUser) {
-        console.error('[SuperuserEventsDashboard] Error getting Supabase user:', userError);
+        console.error('[SuperuserEventsDashboard] Error getting Supabase user after setSession:', userError);
         return false;
       }
 
       console.log('[SuperuserEventsDashboard] Checking super admin for user:', supabaseUser.id);
+      console.log('[SuperuserEventsDashboard] Supabase auth.uid():', supabaseUser.id);
+      console.log('[SuperuserEventsDashboard] Session valid:', !!session);
 
-      // Query user_roles table to check for super_admin role
-      // RLS policies should allow this now that session is set
+      // [2025-01-XX] - Verify session is fully set before querying
+      // Wait a moment to ensure session propagation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Double-check session is still valid
+      const { data: { user: verifyUser }, error: verifyError } = await supabase.auth.getUser();
+      if (verifyError || !verifyUser) {
+        console.error('[SuperuserEventsDashboard] Session lost after setSession:', verifyError);
+        return false;
+      }
+      console.log('[SuperuserEventsDashboard] Verified session user ID:', verifyUser.id);
+
+      // [2025-01-XX] - Query user_roles table to check for super_admin OR events_superuser role
+      // [2025-11-30] - RLS policies should allow this now that session is set
+      // Using supabaseUser.id instead of user.id (from API)
+      console.log('[SuperuserEventsDashboard] Querying user_roles for user_id:', supabaseUser.id);
+      console.log('[SuperuserEventsDashboard] Session access_token present:', !!session?.access_token);
+      console.log('[SuperuserEventsDashboard] RLS policy should match: user_id = auth.uid()');
+      console.log('[SuperuserEventsDashboard] Expected: user_id =', supabaseUser.id, 'auth.uid() =', verifyUser.id);
+      
+      // Test query: Try querying ALL roles first to see if RLS is working at all
+      const { data: allRoles, error: allRolesError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', supabaseUser.id);
+      
+      console.log('[SuperuserEventsDashboard] Test query (all roles for user):', allRoles, 'error:', allRolesError);
+      
+      // Now query with filters
       const { data: roles, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', supabaseUser.id)
-        .eq('role', 'super_admin')
+        .in('role', ['super_admin', 'events_superuser'])
         .eq('is_active', true)
         .limit(1);
 
+      console.log('[SuperuserEventsDashboard] Query result - data:', roles, 'error:', error);
       if (error) {
-        console.error('[SuperuserEventsDashboard] Error checking super admin:', error);
+        console.error('[SuperuserEventsDashboard] Full error object:', JSON.stringify(error, null, 2));
+        console.error('[SuperuserEventsDashboard] Error checking super admin role:', error);
+        console.error('[SuperuserEventsDashboard] Error code:', error.code);
+        console.error('[SuperuserEventsDashboard] Error message:', error.message);
+        console.error('[SuperuserEventsDashboard] Error details:', JSON.stringify(error, null, 2));
         return false;
       }
 
       const isSuperAdmin = (roles && roles.length > 0) || false;
       console.log('[SuperuserEventsDashboard] Super admin check result:', isSuperAdmin);
+      console.log('[SuperuserEventsDashboard] Roles found:', roles);
       
       return isSuperAdmin;
     } catch (err) {
@@ -516,6 +552,28 @@ const SuperuserEventsDashboard: React.FC = () => {
   // [2025-12-01] - Handle create event success
   const handleCreateSuccess = async () => {
     await loadEvents();
+    setDuplicateEventData(null); // [2025-12-07] - Clear duplicate data after success
+  };
+
+  // [2025-12-07] - Handle duplicate event - fetch full event details and open modal
+  const handleDuplicateEvent = async (eventId: string) => {
+    try {
+      setLoading(true);
+      const response = await apiService.getEvent(eventId);
+      const eventData = response.data?.data || response.data;
+      
+      if (eventData) {
+        setDuplicateEventData(eventData);
+        setCreateModalVisible(true);
+      } else {
+        setError('Failed to load event details for duplication');
+      }
+    } catch (err: any) {
+      console.error('[SuperuserEventsDashboard] Error loading event for duplication:', err);
+      setError(err?.message || 'Failed to load event details. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -981,9 +1039,17 @@ const SuperuserEventsDashboard: React.FC = () => {
                             </button>
                             <button
                               onClick={() => handleEditClick(event)}
-                              className="text-indigo-600 hover:text-indigo-900"
+                              className="text-indigo-600 hover:text-indigo-900 mr-3"
                             >
                               Edit
+                            </button>
+                            <button
+                              onClick={() => handleDuplicateEvent(event.id)}
+                              disabled={loading}
+                              className="text-green-600 hover:text-green-900"
+                              title="Duplicate this event"
+                            >
+                              Duplicate
                             </button>
                           </td>
                         </tr>
@@ -1119,6 +1185,14 @@ const SuperuserEventsDashboard: React.FC = () => {
                             >
                               Edit
                             </button>
+                            <button
+                              onClick={() => handleDuplicateEvent(event.id)}
+                              disabled={loading}
+                              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50"
+                              title="Duplicate this event"
+                            >
+                              Duplicate
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -1188,8 +1262,12 @@ const SuperuserEventsDashboard: React.FC = () => {
       {/* Create Event Modal */}
       <CreateEventModal
         visible={createModalVisible}
-        onClose={() => setCreateModalVisible(false)}
+        onClose={() => {
+          setCreateModalVisible(false);
+          setDuplicateEventData(null); // [2025-12-07] - Clear duplicate data when closing
+        }}
         onSuccess={handleCreateSuccess}
+        initialData={duplicateEventData} // [2025-12-07] - Pass duplicate data to modal
       />
 
       {/* Create Organizer Modal */}
