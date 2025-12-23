@@ -316,17 +316,23 @@ const SuperuserEventsDashboard: React.FC = () => {
   };
 
   // [2025-12-05] - Calculate filtered events at component level for use in handleSelectAll
+  // [2025-01-XX] - Fixed search to check correct fields: metadata.organizer_name, location, venue_area
   const filteredEvents = searchQuery.trim() 
     ? events.filter(event => {
         const query = searchQuery.toLowerCase();
         const title = (event.title || '').toLowerCase();
         const location = (event.location || event.venue_area || '').toLowerCase();
-        const organizer = (event.organizer || event.organizer_name || '').toLowerCase();
-        const description = (event.description || '').toLowerCase();
+        const organizer = (event.metadata?.organizer_name || '').toLowerCase();
+        const organizerAddress = (event.metadata?.organizer_address || '').toLowerCase();
+        const venueArea = (event.venue_area || '').toLowerCase();
+        // Also search in metadata as JSON string for any other fields
+        const metadataStr = JSON.stringify(event.metadata || {}).toLowerCase();
         return title.includes(query) || 
                location.includes(query) || 
+               venueArea.includes(query) ||
                organizer.includes(query) ||
-               description.includes(query);
+               organizerAddress.includes(query) ||
+               metadataStr.includes(query);
       })
     : events;
 
