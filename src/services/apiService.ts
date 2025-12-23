@@ -90,11 +90,32 @@ class ApiService {
   }
 
   // [2025-12-05] - User registration with business type
+  // Note: Registration doesn't require authentication, so we skip the token
   async register(email: string, password: string, businessType: string, businessName: string) {
-    return this.request('/api/auth/register', {
+    const url = `${API_BASE_URL}/api/auth/register`;
+    console.log('[ApiService] Registration request URL:', url);
+    
+    const response = await fetch(url, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ email, password, business_type: businessType, business_name: businessName }),
     });
+    
+    if (!response.ok) {
+      let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+        console.error('[ApiService] Registration error response:', errorData);
+      } catch (e) {
+        // Response not JSON, use status text
+      }
+      throw new Error(errorMessage);
+    }
+    
+    return response.json();
   }
 
   async logout() {
@@ -315,6 +336,7 @@ class ApiService {
     onlyUpcoming?: boolean;
     onlyScraped?: boolean;
     needsReview?: boolean;
+    search?: string; // [2025-01-XX] - Server-side search query
     sortBy?: 'start_time' | 'created_at' | 'title' | 'event_type' | 'status' | 'location' | 'organizer';
     sortOrder?: 'asc' | 'desc';
   } = {}) {
@@ -333,6 +355,7 @@ class ApiService {
     if (params.onlyUpcoming) searchParams.set('onlyUpcoming', 'true');
     if (params.onlyScraped) searchParams.set('onlyScraped', 'true');
     if (params.needsReview) searchParams.set('needsReview', 'true');
+    if (params.search) searchParams.set('search', params.search); // [2025-01-XX] - Add search parameter
     if (params.sortBy) searchParams.set('sortBy', params.sortBy);
     if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
 

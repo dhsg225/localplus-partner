@@ -220,6 +220,7 @@ const SuperuserEventsDashboard: React.FC = () => {
       }
 
       // [2025-11-29] - Use dedicated superuser endpoint
+      // [2025-01-XX] - Include search query for server-side search
       const response = await apiService.getSuperuserEvents({
         limit: pagination.limit,
         offset: pagination.offset,
@@ -227,6 +228,7 @@ const SuperuserEventsDashboard: React.FC = () => {
         eventType: filters.eventType || undefined,
         onlyUpcoming: filters.onlyUpcoming || undefined,
         onlyScraped: filters.onlyScraped || undefined,
+        search: searchQuery.trim() || undefined, // [2025-01-XX] - Server-side search
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder
       });
@@ -256,7 +258,7 @@ const SuperuserEventsDashboard: React.FC = () => {
 
   useEffect(() => {
     loadEvents();
-  }, [pagination.offset, filters]);
+  }, [pagination.offset, filters, searchQuery]); // [2025-01-XX] - Reload when search query changes
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -316,25 +318,9 @@ const SuperuserEventsDashboard: React.FC = () => {
   };
 
   // [2025-12-05] - Calculate filtered events at component level for use in handleSelectAll
-  // [2025-01-XX] - Fixed search to check correct fields: metadata.organizer_name, location, venue_area
-  const filteredEvents = searchQuery.trim() 
-    ? events.filter(event => {
-        const query = searchQuery.toLowerCase();
-        const title = (event.title || '').toLowerCase();
-        const location = (event.location || event.venue_area || '').toLowerCase();
-        const organizer = (event.metadata?.organizer_name || '').toLowerCase();
-        const organizerAddress = (event.metadata?.organizer_address || '').toLowerCase();
-        const venueArea = (event.venue_area || '').toLowerCase();
-        // Also search in metadata as JSON string for any other fields
-        const metadataStr = JSON.stringify(event.metadata || {}).toLowerCase();
-        return title.includes(query) || 
-               location.includes(query) || 
-               venueArea.includes(query) ||
-               organizer.includes(query) ||
-               organizerAddress.includes(query) ||
-               metadataStr.includes(query);
-      })
-    : events;
+  // [2025-01-XX] - Server-side search now handles filtering, so we just use events directly
+  // Client-side filtering removed since search is now done server-side
+  const filteredEvents = events;
 
   const handleSelectAll = () => {
     if (selectedEvents.size === filteredEvents.length && filteredEvents.length > 0) {
@@ -639,23 +625,53 @@ const SuperuserEventsDashboard: React.FC = () => {
           <p className="text-sm text-gray-500 mt-1">View and manage all events across the platform</p>
         </div>
         <div className="flex items-center gap-3">
-          {/* [2025-12-05] - Search bar */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search events..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
-            />
-            <svg
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {/* [2025-12-05] - Search bar with button */}
+          <div className="relative flex items-center gap-2">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    loadEvents();
+                  }
+                }}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <button
+              onClick={() => {
+                setPagination(prev => ({ ...prev, offset: 0 })); // Reset to first page
+                loadEvents();
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              title="Search events"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+              Search
+            </button>
+            {searchQuery.trim() && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setPagination(prev => ({ ...prev, offset: 0 }));
+                  loadEvents();
+                }}
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800"
+                title="Clear search"
+              >
+                Clear
+              </button>
+            )}
           </div>
           {/* [2025-12-05] - Bulk actions */}
           {selectedEvents.size > 0 && (
@@ -878,7 +894,8 @@ const SuperuserEventsDashboard: React.FC = () => {
           <>
             {searchQuery.trim() && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-sm text-blue-700">
-                Showing {filteredEvents.length} of {events.length} events matching "{searchQuery}"
+                Showing {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} matching "{searchQuery}"
+                {pagination.total > 0 && ` (${pagination.total} total)`}
               </div>
             )}
             {viewMode === 'list' ? (
