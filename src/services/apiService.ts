@@ -255,8 +255,10 @@ class ApiService {
   }
 
   // [2025-12-01] - Organizers endpoints
-  async getOrganizers() {
-    return this.request('/api/organizers', {
+  // [2025-01-XX] - Added search parameter for autocomplete
+  async getOrganizers(search?: string) {
+    const url = search ? `/api/organizers?search=${encodeURIComponent(search)}` : '/api/organizers';
+    return this.request(url, {
       method: 'GET',
     });
   }
@@ -276,8 +278,18 @@ class ApiService {
   }
 
   // [2025-12-01] - Locations endpoints
-  async getLocations() {
-    return this.request('/api/locations', {
+  // [2025-01-XX] - Added search parameter for autocomplete
+  async getLocations(search?: string) {
+    const url = search ? `/api/locations?search=${encodeURIComponent(search)}` : '/api/locations';
+    return this.request(url, {
+      method: 'GET',
+    });
+  }
+
+  // [2025-01-XX] - Categories endpoints (wp_term_mapping)
+  async getCategories(search?: string) {
+    const url = search ? `/api/categories?search=${encodeURIComponent(search)}` : '/api/categories';
+    return this.request(url, {
       method: 'GET',
     });
   }

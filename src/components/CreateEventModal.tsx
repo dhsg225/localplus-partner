@@ -6,12 +6,14 @@ interface CreateEventModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  initialData?: any; // [2025-12-07] - Optional initial data for duplicating events
 }
 
 const CreateEventModal: React.FC<CreateEventModalProps> = ({
   visible,
   onClose,
-  onSuccess
+  onSuccess,
+  initialData
 }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -41,6 +43,18 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   });
   const [loadingOrganizers, setLoadingOrganizers] = useState(false);
 
+  // [2025-01-XX] - Autocomplete state for Category, Location, Organizer
+  const [categories, setCategories] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [locationSearch, setLocationSearch] = useState('');
+  const [organizerSearch, setOrganizerSearch] = useState('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [showOrganizerDropdown, setShowOrganizerDropdown] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+
   // [2025-12-05] - Recurrence state
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceData, setRecurrenceData] = useState({
@@ -57,17 +71,49 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   });
 
   // [2025-12-01] - Load organizers when modal opens
+  // [2025-01-XX] - Also load categories and locations
   useEffect(() => {
     if (visible) {
       loadOrganizers();
+      loadCategories();
+      loadLocations();
     }
   }, [visible]);
 
+  // [2025-01-XX] - Load categories from API
+  const loadCategories = async (search?: string) => {
+    setLoadingCategories(true);
+    try {
+      const response = await apiService.getCategories(search);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setCategories(data);
+    } catch (err) {
+      console.error('[CreateEventModal] Error loading categories:', err);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  // [2025-01-XX] - Load locations from API
+  const loadLocations = async (search?: string) => {
+    setLoadingLocations(true);
+    try {
+      const response = await apiService.getLocations(search);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setLocations(data);
+    } catch (err) {
+      console.error('[CreateEventModal] Error loading locations:', err);
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
+
   // [2025-12-01] - Load organizers from API
-  const loadOrganizers = async () => {
+  // [2025-01-XX] - Added search parameter for autocomplete
+  const loadOrganizers = async (search?: string) => {
     setLoadingOrganizers(true);
     try {
-      const response = await apiService.getOrganizers();
+      const response = await apiService.getOrganizers(search);
       const data = Array.isArray(response.data) ? response.data : response?.data?.data || [];
       setOrganizers(data);
     } catch (err) {
@@ -78,29 +124,127 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     }
   };
 
+  // [2025-01-XX] - Debounced search handlers for autocomplete
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (categorySearch.trim()) {
+        loadCategories(categorySearch);
+      } else {
+        loadCategories();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [categorySearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (locationSearch.trim()) {
+        loadLocations(locationSearch);
+      } else {
+        loadLocations();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [locationSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (organizerSearch.trim()) {
+        loadOrganizers(organizerSearch);
+      } else {
+        loadOrganizers();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [organizerSearch]);
+
   // [2025-12-01] - Set default times (now + 1 hour, now + 3 hours)
+  // [2025-12-07] - Also handle initialData for duplicating events
   useEffect(() => {
     if (visible) {
-      const now = new Date();
-      const start = new Date(now.getTime() + 60 * 60 * 1000); // +1 hour
-      const end = new Date(now.getTime() + 3 * 60 * 60 * 1000); // +3 hours
-      
-      const formatDateTimeLocal = (date: Date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-      };
+      if (initialData) {
+        // [2025-12-07] - Pre-fill form with event data for duplication
+        const formatDateTimeLocal = (dateString: string) => {
+          const date = new Date(dateString);
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
 
-      setFormData(prev => ({
-        ...prev,
-        start_time: formatDateTimeLocal(start),
-        end_time: formatDateTimeLocal(end)
-      }));
+        setFormData({
+          title: `${initialData.title} (Copy)`,
+          description: initialData.description || '',
+          subtitle: initialData.subtitle || '',
+          status: 'draft', // Always set to draft for duplicates
+          event_type: initialData.event_type || 'general',
+          location: initialData.location || '',
+          venue_area: initialData.venue_area || '',
+          start_time: initialData.start_time ? formatDateTimeLocal(initialData.start_time) : '',
+          end_time: initialData.end_time ? formatDateTimeLocal(initialData.end_time) : ''
+        });
+
+        // Set organizer if present
+        if (initialData.organizer_id) {
+          setSelectedOrganizerId(initialData.organizer_id);
+        }
+
+        // Handle recurrence data if present
+        if (initialData.recurrence_rules) {
+          setIsRecurring(true);
+          const rule = initialData.recurrence_rules;
+          setRecurrenceData({
+            frequency: rule.frequency || 'weekly',
+            interval: rule.interval || 1,
+            byweekday: rule.byweekday || [],
+            bymonthday: rule.bymonthday || null,
+            bysetpos: rule.bysetpos || null,
+            endCondition: rule.until ? 'until' : rule.count ? 'count' : 'never',
+            until: rule.until || '',
+            count: rule.count || null,
+            exceptions: rule.exceptions || [],
+            additional_dates: rule.additional_dates || []
+          });
+        } else {
+          setIsRecurring(false);
+          setRecurrenceData({
+            frequency: 'weekly',
+            interval: 1,
+            byweekday: [],
+            bymonthday: null,
+            bysetpos: null,
+            endCondition: 'never',
+            until: '',
+            count: null,
+            exceptions: [],
+            additional_dates: []
+          });
+        }
+      } else {
+        // Default behavior: set times to now + 1 hour, now + 3 hours
+        const now = new Date();
+        const start = new Date(now.getTime() + 60 * 60 * 1000); // +1 hour
+        const end = new Date(now.getTime() + 3 * 60 * 60 * 1000); // +3 hours
+        
+        const formatDateTimeLocal = (date: Date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+
+        setFormData(prev => ({
+          ...prev,
+          start_time: formatDateTimeLocal(start),
+          end_time: formatDateTimeLocal(end)
+        }));
+      }
     }
-  }, [visible]);
+  }, [visible, initialData]);
 
   // [2025-12-01] - Handle create new organizer
   const handleCreateOrganizer = async () => {
@@ -229,6 +373,16 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         additional_dates: []
       });
 
+      // [2025-12-07] - Reset organizer selection
+      setSelectedOrganizerId('');
+      // [2025-01-XX] - Reset autocomplete search states
+      setCategorySearch('');
+      setLocationSearch('');
+      setOrganizerSearch('');
+      setShowCategoryDropdown(false);
+      setShowLocationDropdown(false);
+      setShowOrganizerDropdown(false);
+
       onClose();
       if (onSuccess) {
         onSuccess();
@@ -240,6 +394,46 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       setLoading(false);
     }
   };
+
+  // [2025-12-07] - Reset form when modal closes
+  useEffect(() => {
+    if (!visible) {
+      // Reset form when modal is closed
+      setFormData({
+        title: '',
+        description: '',
+        subtitle: '',
+        status: 'draft',
+        event_type: 'general',
+        location: '',
+        venue_area: '',
+        start_time: '',
+        end_time: ''
+      });
+      setIsRecurring(false);
+      setRecurrenceData({
+        frequency: 'weekly',
+        interval: 1,
+        byweekday: [],
+        bymonthday: null,
+        bysetpos: null,
+        endCondition: 'never',
+        until: '',
+        count: null,
+        exceptions: [],
+        additional_dates: []
+      });
+      setSelectedOrganizerId('');
+      // [2025-01-XX] - Reset autocomplete search states
+      setCategorySearch('');
+      setLocationSearch('');
+      setOrganizerSearch('');
+      setShowCategoryDropdown(false);
+      setShowLocationDropdown(false);
+      setShowOrganizerDropdown(false);
+      setError(null);
+    }
+  }, [visible]);
 
   if (!visible) return null;
 
@@ -258,7 +452,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
             {/* Header */}
             <div className="bg-white px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Create New Event</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {initialData ? 'Duplicate Event' : 'Create New Event'}
+                </h3>
                 <button
                   type="button"
                   onClick={onClose}
@@ -338,19 +534,46 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   </select>
                 </div>
 
-                {/* Event Type */}
-                <div>
+                {/* Event Type - Autocomplete */}
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Category
                   </label>
                   <input
                     type="text"
-                    value={formData.event_type}
-                    onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
+                    value={categorySearch || formData.event_type}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCategorySearch(value);
+                      setFormData({ ...formData, event_type: value });
+                      setShowCategoryDropdown(true);
+                    }}
+                    onFocus={() => setShowCategoryDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="general"
+                    placeholder="Type to search categories..."
                   />
-                  <p className="mt-1 text-xs text-gray-500">Enter category name or leave as "general"</p>
+                  {showCategoryDropdown && categories.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.term_id}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, event_type: cat.name });
+                            setCategorySearch(cat.name);
+                            setShowCategoryDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {loadingCategories && (
+                    <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
+                  )}
                 </div>
 
                 {/* Start Time */}
@@ -381,18 +604,49 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   />
                 </div>
 
-                {/* Location */}
-                <div>
+                {/* Location - Autocomplete */}
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Location
                   </label>
                   <input
                     type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    value={locationSearch || formData.location}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setLocationSearch(value);
+                      setFormData({ ...formData, location: value });
+                      setShowLocationDropdown(true);
+                    }}
+                    onFocus={() => setShowLocationDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Event location"
+                    placeholder="Type to search locations..."
                   />
+                  {showLocationDropdown && locations.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {locations.map((loc) => (
+                        <button
+                          key={loc.id}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, location: loc.name });
+                            setLocationSearch(loc.name);
+                            setShowLocationDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                        >
+                          <div className="font-medium">{loc.name}</div>
+                          {loc.address && (
+                            <div className="text-xs text-gray-500">{loc.address}</div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {loadingLocations && (
+                    <p className="mt-1 text-xs text-gray-500">Loading locations...</p>
+                  )}
                 </div>
 
                 {/* Venue Area */}
@@ -743,20 +997,46 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   </div>
 
                   {!showCreateOrganizer ? (
-                    <div>
-                      <select
-                        value={selectedOrganizerId}
-                        onChange={(e) => setSelectedOrganizerId(e.target.value)}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={organizerSearch || (selectedOrganizerId ? organizers.find(o => o.id === selectedOrganizerId)?.name || '' : '')}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setOrganizerSearch(value);
+                          setShowOrganizerDropdown(true);
+                          // Clear selection if user is typing
+                          if (value !== organizers.find(o => o.id === selectedOrganizerId)?.name) {
+                            setSelectedOrganizerId('');
+                          }
+                        }}
+                        onFocus={() => setShowOrganizerDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowOrganizerDropdown(false), 200)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Type to search organizers..."
                         disabled={loadingOrganizers}
-                      >
-                        <option value="">Select an organizer (optional)</option>
-                        {organizers.map((org) => (
-                          <option key={org.id} value={org.id}>
-                            {org.name}
-                          </option>
-                        ))}
-                      </select>
+                      />
+                      {showOrganizerDropdown && organizers.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                          {organizers.map((org) => (
+                            <button
+                              key={org.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedOrganizerId(org.id);
+                                setOrganizerSearch(org.name);
+                                setShowOrganizerDropdown(false);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                            >
+                              <div className="font-medium">{org.name}</div>
+                              {org.description && (
+                                <div className="text-xs text-gray-500">{org.description}</div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {loadingOrganizers && (
                         <p className="mt-1 text-xs text-gray-500">Loading organizers...</p>
                       )}
