@@ -83,7 +83,7 @@ const SuperuserEventsDashboard: React.FC = () => {
     onlyUpcoming: false,
     onlyScraped: false,
     sortBy: 'start_time' as 'start_time' | 'created_at' | 'title' | 'event_type' | 'status' | 'location' | 'organizer',
-    sortOrder: 'asc' as 'asc' | 'desc'
+    sortOrder: 'desc' as 'asc' | 'desc' // [2025-12-23] - Default to descending (newest first)
   });
 
   // [2025-12-05] - Search query
