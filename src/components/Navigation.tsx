@@ -78,7 +78,12 @@ const Navigation: React.FC<NavigationProps> = ({
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <h1 className="text-xl font-bold text-gray-900">LocalPlus Partner</h1>
+            <div className="flex flex-col items-start">
+              <h1 className="text-xl font-bold text-gray-900">LocalPlus Partner</h1>
+              <span className="text-[10px] text-gray-400 font-normal leading-none mt-0.5">
+                v0.2.01
+              </span>
+            </div>
             <div className="text-sm text-gray-500">Loading menus...</div>
           </div>
         </div>
@@ -97,10 +102,13 @@ const Navigation: React.FC<NavigationProps> = ({
       <div className="w-full">
         <div className="flex justify-between h-16 items-center">
           {/* Logo - far left with minimal padding */}
-          <div className="flex-shrink-0 flex items-center pl-3">
+          <div className="flex-shrink-0 flex flex-col items-start pl-3">
             <h1 className="text-lg font-bold text-gray-900 whitespace-nowrap">
               LocalPlus
             </h1>
+            <span className="text-[10px] text-gray-400 font-normal leading-none mt-0.5">
+              v0.2.01
+            </span>
           </div>
           
           {/* Menu items - center area with more space - show all items */}
