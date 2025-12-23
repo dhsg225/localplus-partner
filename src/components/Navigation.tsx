@@ -81,7 +81,7 @@ const Navigation: React.FC<NavigationProps> = ({
             <div className="flex flex-col items-start">
               <h1 className="text-xl font-bold text-gray-900">LocalPlus Partner</h1>
             <span className="text-[10px] text-gray-400 font-normal leading-none mt-0.5">
-              v0.2.02
+              v0.2.03
             </span>
             </div>
             <div className="text-sm text-gray-500">Loading menus...</div>
@@ -107,7 +107,7 @@ const Navigation: React.FC<NavigationProps> = ({
               LocalPlus
             </h1>
             <span className="text-[10px] text-gray-400 font-normal leading-none mt-0.5">
-              v0.2.02
+              v0.2.03
             </span>
           </div>
           
