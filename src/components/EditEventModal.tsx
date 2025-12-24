@@ -428,18 +428,24 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                       setFormData({ ...formData, event_type: value });
                       setShowCategoryDropdown(true);
                     }}
-                    onFocus={() => setShowCategoryDropdown(true)}
+                    onFocus={() => {
+                      setShowCategoryDropdown(true);
+                      if (categories.length === 0) {
+                        loadCategories();
+                      }
+                    }}
                     onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Type to search categories..."
                   />
                   {showCategoryDropdown && categories.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                       {categories.map((cat) => (
                         <button
                           key={cat.term_id}
                           type="button"
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault();
                             setFormData({ ...formData, event_type: cat.name });
                             setCategorySearch(cat.name);
                             setShowCategoryDropdown(false);
@@ -498,18 +504,24 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                       setFormData({ ...formData, location: value });
                       setShowLocationDropdown(true);
                     }}
-                    onFocus={() => setShowLocationDropdown(true)}
+                    onFocus={() => {
+                      setShowLocationDropdown(true);
+                      if (locations.length === 0) {
+                        loadLocations();
+                      }
+                    }}
                     onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Type to search locations..."
                   />
                   {showLocationDropdown && locations.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                       {locations.map((loc) => (
                         <button
                           key={loc.id}
                           type="button"
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault();
                             setFormData({ ...formData, location: loc.name });
                             setLocationSearch(loc.name);
                             setShowLocationDropdown(false);
@@ -560,19 +572,25 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                         setSelectedOrganizerId('');
                       }
                     }}
-                    onFocus={() => setShowOrganizerDropdown(true)}
+                    onFocus={() => {
+                      setShowOrganizerDropdown(true);
+                      if (organizers.length === 0) {
+                        loadOrganizers();
+                      }
+                    }}
                     onBlur={() => setTimeout(() => setShowOrganizerDropdown(false), 200)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Type to search organizers..."
                     disabled={loadingOrganizers}
                   />
                   {showOrganizerDropdown && organizers.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                       {organizers.map((org) => (
                         <button
                           key={org.id}
                           type="button"
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault();
                             setSelectedOrganizerId(org.id);
                             setOrganizerSearch(org.name);
                             setShowOrganizerDropdown(false);
