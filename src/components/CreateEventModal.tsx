@@ -468,7 +468,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
             </div>
 
             {/* Content */}
-            <div className="bg-white px-6 py-4 max-h-[70vh] overflow-y-auto">
+            <div className="bg-white px-6 py-4 pb-32 max-h-[70vh] overflow-y-auto">
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
                   {error}
