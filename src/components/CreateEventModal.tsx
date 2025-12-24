@@ -554,12 +554,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     placeholder="Type to search categories..."
                   />
                   {showCategoryDropdown && categories.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                       {categories.map((cat) => (
                         <button
                           key={cat.term_id}
                           type="button"
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault();
                             setFormData({ ...formData, event_type: cat.name });
                             setCategorySearch(cat.name);
                             setShowCategoryDropdown(false);
@@ -624,12 +625,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     placeholder="Type to search locations..."
                   />
                   {showLocationDropdown && locations.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                       {locations.map((loc) => (
                         <button
                           key={loc.id}
                           type="button"
-                          onClick={() => {
+                          onMouseDown={(e) => {
+                            e.preventDefault();
                             setFormData({ ...formData, location: loc.name });
                             setLocationSearch(loc.name);
                             setShowLocationDropdown(false);
@@ -1017,12 +1019,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                         disabled={loadingOrganizers}
                       />
                       {showOrganizerDropdown && organizers.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                           {organizers.map((org) => (
                             <button
                               key={org.id}
                               type="button"
-                              onClick={() => {
+                              onMouseDown={(e) => {
+                                e.preventDefault();
                                 setSelectedOrganizerId(org.id);
                                 setOrganizerSearch(org.name);
                                 setShowOrganizerDropdown(false);
