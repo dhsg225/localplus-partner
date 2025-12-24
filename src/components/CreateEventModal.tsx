@@ -43,17 +43,22 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   });
   const [loadingOrganizers, setLoadingOrganizers] = useState(false);
 
-  // [2025-01-XX] - Autocomplete state for Category, Location, Organizer
+  // [2025-01-XX] - Autocomplete state for Category, Location, Organizer, Calendar
   const [categories, setCategories] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
+  const [calendars, setCalendars] = useState<any[]>([]);
   const [categorySearch, setCategorySearch] = useState('');
   const [locationSearch, setLocationSearch] = useState('');
+  const [calendarSearch, setCalendarSearch] = useState('');
   const [organizerSearch, setOrganizerSearch] = useState('');
+  const [selectedCalendarSlug, setSelectedCalendarSlug] = useState<string>('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [showCalendarDropdown, setShowCalendarDropdown] = useState(false);
   const [showOrganizerDropdown, setShowOrganizerDropdown] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingLocations, setLoadingLocations] = useState(false);
+  const [loadingCalendars, setLoadingCalendars] = useState(false);
 
   // [2025-12-05] - Recurrence state
   const [isRecurring, setIsRecurring] = useState(false);
@@ -71,12 +76,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   });
 
   // [2025-12-01] - Load organizers when modal opens
-  // [2025-01-XX] - Also load categories and locations
+  // [2025-01-XX] - Also load categories, locations, and calendars
   useEffect(() => {
     if (visible) {
       loadOrganizers();
       loadCategories();
       loadLocations();
+      loadCalendars();
     }
   }, [visible]);
 
@@ -105,6 +111,20 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       console.error('[CreateEventModal] Error loading locations:', err);
     } finally {
       setLoadingLocations(false);
+    }
+  };
+
+  // [2025-01-23] - Load calendars from API
+  const loadCalendars = async (search?: string) => {
+    setLoadingCalendars(true);
+    try {
+      const response = await apiService.getCalendars(search);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setCalendars(data);
+    } catch (err) {
+      console.error('[CreateEventModal] Error loading calendars:', err);
+    } finally {
+      setLoadingCalendars(false);
     }
   };
 
@@ -157,6 +177,17 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     }, 300);
     return () => clearTimeout(timer);
   }, [organizerSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (calendarSearch.trim()) {
+        loadCalendars(calendarSearch);
+      } else {
+        loadCalendars();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [calendarSearch]);
 
   // [2025-12-01] - Set default times (now + 1 hour, now + 3 hours)
   // [2025-12-07] - Also handle initialData for duplicating events
@@ -302,7 +333,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         venue_area: formData.venue_area || null,
         start_time: startTime,
         end_time: endTime,
-        timezone_id: 'Asia/Bangkok'
+        timezone_id: 'Asia/Bangkok',
+        // [2025-01-23] - Include calendar (inspired by EventON's calendar system)
+        calendar_slug: selectedCalendarSlug || calendarSearch || null
       };
 
       // [2025-12-05] - Add recurrence_rules if event is recurring
@@ -379,9 +412,12 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       setCategorySearch('');
       setLocationSearch('');
       setOrganizerSearch('');
+      setCalendarSearch('');
+      setSelectedCalendarSlug('');
       setShowCategoryDropdown(false);
       setShowLocationDropdown(false);
       setShowOrganizerDropdown(false);
+      setShowCalendarDropdown(false);
 
       onClose();
       if (onSuccess) {
@@ -574,6 +610,61 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   )}
                   {loadingCategories && (
                     <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
+                  )}
+                </div>
+
+                {/* Calendar - Autocomplete */}
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Calendar
+                  </label>
+                  <input
+                    type="text"
+                    value={calendarSearch || (selectedCalendarSlug ? calendars.find(c => c.slug === selectedCalendarSlug)?.name || '' : '')}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCalendarSearch(value);
+                      setShowCalendarDropdown(true);
+                      // Clear selection if user is typing
+                      if (value !== calendars.find(c => c.slug === selectedCalendarSlug)?.name) {
+                        setSelectedCalendarSlug('');
+                      }
+                    }}
+                    onFocus={() => {
+                      setShowCalendarDropdown(true);
+                      if (calendars.length === 0) {
+                        loadCalendars();
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setShowCalendarDropdown(false), 200)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Type to search calendars..."
+                    disabled={loadingCalendars}
+                  />
+                  {showCalendarDropdown && calendars.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {calendars.map((cal) => (
+                        <button
+                          key={cal.slug}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setSelectedCalendarSlug(cal.slug);
+                            setCalendarSearch(cal.name);
+                            setShowCalendarDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                        >
+                          <div className="font-medium">{cal.name}</div>
+                          {cal.description && (
+                            <div className="text-xs text-gray-500">{cal.description}</div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {loadingCalendars && (
+                    <p className="mt-1 text-xs text-gray-500">Loading calendars...</p>
                   )}
                 </div>
 

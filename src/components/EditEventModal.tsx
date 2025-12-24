@@ -49,20 +49,25 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [loadingEvent, setLoadingEvent] = useState(false);
 
-  // [2025-01-XX] - Autocomplete state for Category, Location, Organizer
+  // [2025-01-XX] - Autocomplete state for Category, Location, Organizer, Calendar
   const [categories, setCategories] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
   const [organizers, setOrganizers] = useState<any[]>([]);
+  const [calendars, setCalendars] = useState<any[]>([]);
   const [categorySearch, setCategorySearch] = useState('');
   const [locationSearch, setLocationSearch] = useState('');
   const [organizerSearch, setOrganizerSearch] = useState('');
+  const [calendarSearch, setCalendarSearch] = useState('');
   const [selectedOrganizerId, setSelectedOrganizerId] = useState<string>('');
+  const [selectedCalendarSlug, setSelectedCalendarSlug] = useState<string>('');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showOrganizerDropdown, setShowOrganizerDropdown] = useState(false);
+  const [showCalendarDropdown, setShowCalendarDropdown] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingOrganizers, setLoadingOrganizers] = useState(false);
+  const [loadingCalendars, setLoadingCalendars] = useState(false);
 
   // [2025-12-05] - Recurrence state
   const [isRecurring, setIsRecurring] = useState(false);
@@ -80,13 +85,14 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
   });
 
   // [2025-12-05] - Load full event with recurrence rule when modal opens
-  // [2025-01-XX] - Also load categories, locations, and organizers
+  // [2025-01-XX] - Also load categories, locations, organizers, and calendars
   useEffect(() => {
     if (visible && event) {
       loadFullEvent();
       loadCategories();
       loadLocations();
       loadOrganizers();
+      loadCalendars();
     }
   }, [visible, event?.id]);
 
@@ -132,6 +138,20 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
     }
   };
 
+  // [2025-01-23] - Load calendars from API
+  const loadCalendars = async (search?: string) => {
+    setLoadingCalendars(true);
+    try {
+      const response = await apiService.getCalendars(search);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setCalendars(data);
+    } catch (err) {
+      console.error('[EditEventModal] Error loading calendars:', err);
+    } finally {
+      setLoadingCalendars(false);
+    }
+  };
+
   // [2025-01-XX] - Debounced search handlers for autocomplete
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -165,6 +185,17 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
     }, 300);
     return () => clearTimeout(timer);
   }, [organizerSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (calendarSearch.trim()) {
+        loadCalendars(calendarSearch);
+      } else {
+        loadCalendars();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [calendarSearch]);
 
   const loadFullEvent = async () => {
     if (!event) return;
@@ -208,6 +239,13 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         // Clear organizer search if no organizer
         setOrganizerSearch('');
         setSelectedOrganizerId('');
+      }
+      // [2025-01-23] - Initialize calendar
+      if (fullEvent.calendar_slug) {
+        setSelectedCalendarSlug(fullEvent.calendar_slug);
+      } else {
+        setSelectedCalendarSlug('');
+        setCalendarSearch('');
       }
 
       // Load recurrence data if event is recurring
@@ -283,7 +321,9 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         end_time: formData.end_time ? new Date(formData.end_time).toISOString() : undefined,
         // [2025-01-XX] - Include organizer data (selected ID or typed text)
         organizer_id: selectedOrganizerId || null,
-        organizer_name: selectedOrganizerId ? organizers.find(o => o.id === selectedOrganizerId)?.name : organizerSearch || null
+        organizer_name: selectedOrganizerId ? organizers.find(o => o.id === selectedOrganizerId)?.name : organizerSearch || null,
+        // [2025-01-23] - Include calendar (inspired by EventON's calendar system)
+        calendar_slug: selectedCalendarSlug || calendarSearch || null
       };
 
       // Validate date range
@@ -467,6 +507,61 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                   )}
                   {loadingCategories && (
                     <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
+                  )}
+                </div>
+
+                {/* Calendar - Autocomplete */}
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Calendar
+                  </label>
+                  <input
+                    type="text"
+                    value={calendarSearch !== '' ? calendarSearch : (selectedCalendarSlug ? calendars.find(c => c.slug === selectedCalendarSlug)?.name || '' : '')}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCalendarSearch(value);
+                      setShowCalendarDropdown(true);
+                      // Clear selection if user is typing
+                      if (value !== calendars.find(c => c.slug === selectedCalendarSlug)?.name) {
+                        setSelectedCalendarSlug('');
+                      }
+                    }}
+                    onFocus={() => {
+                      setShowCalendarDropdown(true);
+                      if (calendars.length === 0) {
+                        loadCalendars();
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setShowCalendarDropdown(false), 200)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Type to search calendars..."
+                    disabled={loadingCalendars}
+                  />
+                  {showCalendarDropdown && calendars.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {calendars.map((cal) => (
+                        <button
+                          key={cal.slug}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setSelectedCalendarSlug(cal.slug);
+                            setCalendarSearch(cal.name);
+                            setShowCalendarDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                        >
+                          <div className="font-medium">{cal.name}</div>
+                          {cal.description && (
+                            <div className="text-xs text-gray-500">{cal.description}</div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {loadingCalendars && (
+                    <p className="mt-1 text-xs text-gray-500">Loading calendars...</p>
                   )}
                 </div>
 

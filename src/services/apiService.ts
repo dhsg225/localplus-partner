@@ -294,6 +294,14 @@ class ApiService {
     });
   }
 
+  // [2025-01-23] - Calendars endpoints (inspired by EventON's calendar system)
+  async getCalendars(search?: string) {
+    const url = search ? `/api/calendars?search=${encodeURIComponent(search)}` : '/api/calendars';
+    return this.request(url, {
+      method: 'GET',
+    });
+  }
+
   async createLocation(locationData: {
     name: string;
     description?: string;
