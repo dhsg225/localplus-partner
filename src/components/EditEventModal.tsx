@@ -200,6 +200,14 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       setLocationSearch(fullEvent.location || '');
       if (fullEvent.organizer_id) {
         setSelectedOrganizerId(fullEvent.organizer_id);
+        // Initialize organizerSearch with organizer name if available
+        if (fullEvent.organizer_name) {
+          setOrganizerSearch(fullEvent.organizer_name);
+        }
+      } else {
+        // Clear organizer search if no organizer
+        setOrganizerSearch('');
+        setSelectedOrganizerId('');
       }
 
       // Load recurrence data if event is recurring
@@ -562,7 +570,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={organizerSearch || (selectedOrganizerId ? organizers.find(o => o.id === selectedOrganizerId)?.name || '' : '')}
+                    value={organizerSearch !== '' ? organizerSearch : (selectedOrganizerId ? organizers.find(o => o.id === selectedOrganizerId)?.name || '' : '')}
                     onChange={(e) => {
                       const value = e.target.value;
                       setOrganizerSearch(value);
