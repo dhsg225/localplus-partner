@@ -49,6 +49,21 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [loadingEvent, setLoadingEvent] = useState(false);
 
+  // [2025-01-XX] - Autocomplete state for Category, Location, Organizer
+  const [categories, setCategories] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [organizers, setOrganizers] = useState<any[]>([]);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [locationSearch, setLocationSearch] = useState('');
+  const [organizerSearch, setOrganizerSearch] = useState('');
+  const [selectedOrganizerId, setSelectedOrganizerId] = useState<string>('');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [showOrganizerDropdown, setShowOrganizerDropdown] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [loadingOrganizers, setLoadingOrganizers] = useState(false);
+
   // [2025-12-05] - Recurrence state
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceData, setRecurrenceData] = useState({
@@ -65,11 +80,91 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
   });
 
   // [2025-12-05] - Load full event with recurrence rule when modal opens
+  // [2025-01-XX] - Also load categories, locations, and organizers
   useEffect(() => {
     if (visible && event) {
       loadFullEvent();
+      loadCategories();
+      loadLocations();
+      loadOrganizers();
     }
   }, [visible, event?.id]);
+
+  // [2025-01-XX] - Load categories from API
+  const loadCategories = async (search?: string) => {
+    setLoadingCategories(true);
+    try {
+      const response = await apiService.getCategories(search);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setCategories(data);
+    } catch (err) {
+      console.error('[EditEventModal] Error loading categories:', err);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  // [2025-01-XX] - Load locations from API
+  const loadLocations = async (search?: string) => {
+    setLoadingLocations(true);
+    try {
+      const response = await apiService.getLocations(search);
+      const data = Array.isArray(response.data) ? response.data : [];
+      setLocations(data);
+    } catch (err) {
+      console.error('[EditEventModal] Error loading locations:', err);
+    } finally {
+      setLoadingLocations(false);
+    }
+  };
+
+  // [2025-01-XX] - Load organizers from API
+  const loadOrganizers = async (search?: string) => {
+    setLoadingOrganizers(true);
+    try {
+      const response = await apiService.getOrganizers(search);
+      const data = Array.isArray(response.data) ? response.data : response?.data?.data || [];
+      setOrganizers(data);
+    } catch (err) {
+      console.error('[EditEventModal] Error loading organizers:', err);
+    } finally {
+      setLoadingOrganizers(false);
+    }
+  };
+
+  // [2025-01-XX] - Debounced search handlers for autocomplete
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (categorySearch.trim()) {
+        loadCategories(categorySearch);
+      } else {
+        loadCategories();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [categorySearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (locationSearch.trim()) {
+        loadLocations(locationSearch);
+      } else {
+        loadLocations();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [locationSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (organizerSearch.trim()) {
+        loadOrganizers(organizerSearch);
+      } else {
+        loadOrganizers();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [organizerSearch]);
 
   const loadFullEvent = async () => {
     if (!event) return;
@@ -99,6 +194,13 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         start_time: formatDateTimeLocal(fullEvent.start_time),
         end_time: formatDateTimeLocal(fullEvent.end_time)
       });
+
+      // [2025-01-XX] - Initialize autocomplete search states with event data
+      setCategorySearch(fullEvent.event_type || '');
+      setLocationSearch(fullEvent.location || '');
+      if (fullEvent.organizer_id) {
+        setSelectedOrganizerId(fullEvent.organizer_id);
+      }
 
       // Load recurrence data if event is recurring
       if (fullEvent.is_recurring && fullEvent.recurrence_rule) {
@@ -170,7 +272,10 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         location: formData.location || null,
         venue_area: formData.venue_area || null,
         start_time: formData.start_time ? new Date(formData.start_time).toISOString() : undefined,
-        end_time: formData.end_time ? new Date(formData.end_time).toISOString() : undefined
+        end_time: formData.end_time ? new Date(formData.end_time).toISOString() : undefined,
+        // [2025-01-XX] - Include organizer data (selected ID or typed text)
+        organizer_id: selectedOrganizerId || null,
+        organizer_name: selectedOrganizerId ? organizers.find(o => o.id === selectedOrganizerId)?.name : organizerSearch || null
       };
 
       // Validate date range
@@ -263,7 +368,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
             </div>
 
             {/* Content */}
-            <div className="bg-white px-6 py-4 max-h-[70vh] overflow-y-auto">
+            <div className="bg-white px-6 py-4 pb-32 max-h-[70vh] overflow-y-auto">
               {loadingEvent && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700">
                   Loading event details...
@@ -309,24 +414,46 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                   </select>
                 </div>
 
-                {/* Event Type */}
-                <div>
+                {/* Event Type - Autocomplete */}
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Category
                   </label>
-                  <select
-                    value={formData.event_type || ''}
-                    onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
+                  <input
+                    type="text"
+                    value={categorySearch || formData.event_type || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setCategorySearch(value);
+                      setFormData({ ...formData, event_type: value });
+                      setShowCategoryDropdown(true);
+                    }}
+                    onFocus={() => setShowCategoryDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">General</option>
-                    <option value="music">Music</option>
-                    <option value="food">Food & Drink</option>
-                    <option value="art">Art & Culture</option>
-                    <option value="wellness">Wellness</option>
-                    <option value="sports">Sports</option>
-                    <option value="festival">Festival</option>
-                  </select>
+                    placeholder="Type to search categories..."
+                  />
+                  {showCategoryDropdown && categories.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.term_id}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, event_type: cat.name });
+                            setCategorySearch(cat.name);
+                            setShowCategoryDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {loadingCategories && (
+                    <p className="mt-1 text-xs text-gray-500">Loading categories...</p>
+                  )}
                 </div>
 
                 {/* Start Time */}
@@ -357,18 +484,49 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                   />
                 </div>
 
-                {/* Location */}
-                <div>
+                {/* Location - Autocomplete */}
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Location
                   </label>
                   <input
                     type="text"
-                    value={formData.location || ''}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    placeholder="Event location or venue"
+                    value={locationSearch || formData.location || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setLocationSearch(value);
+                      setFormData({ ...formData, location: value });
+                      setShowLocationDropdown(true);
+                    }}
+                    onFocus={() => setShowLocationDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Type to search locations..."
                   />
+                  {showLocationDropdown && locations.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {locations.map((loc) => (
+                        <button
+                          key={loc.id}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, location: loc.name });
+                            setLocationSearch(loc.name);
+                            setShowLocationDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                        >
+                          <div className="font-medium">{loc.name}</div>
+                          {loc.address && (
+                            <div className="text-xs text-gray-500">{loc.address}</div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {loadingLocations && (
+                    <p className="mt-1 text-xs text-gray-500">Loading locations...</p>
+                  )}
                 </div>
 
                 {/* Venue Area */}
@@ -383,6 +541,55 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                     placeholder="Area or district"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+
+                {/* Organizer - Autocomplete */}
+                <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Organizer
+                  </label>
+                  <input
+                    type="text"
+                    value={organizerSearch || (selectedOrganizerId ? organizers.find(o => o.id === selectedOrganizerId)?.name || '' : '')}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setOrganizerSearch(value);
+                      setShowOrganizerDropdown(true);
+                      // Clear selection if user is typing
+                      if (value !== organizers.find(o => o.id === selectedOrganizerId)?.name) {
+                        setSelectedOrganizerId('');
+                      }
+                    }}
+                    onFocus={() => setShowOrganizerDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowOrganizerDropdown(false), 200)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Type to search organizers..."
+                    disabled={loadingOrganizers}
+                  />
+                  {showOrganizerDropdown && organizers.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {organizers.map((org) => (
+                        <button
+                          key={org.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedOrganizerId(org.id);
+                            setOrganizerSearch(org.name);
+                            setShowOrganizerDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                        >
+                          <div className="font-medium">{org.name}</div>
+                          {org.description && (
+                            <div className="text-xs text-gray-500">{org.description}</div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {loadingOrganizers && (
+                    <p className="mt-1 text-xs text-gray-500">Loading organizers...</p>
+                  )}
                 </div>
 
                 {/* Recurrence Section - Same as CreateEventModal */}
