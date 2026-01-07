@@ -35,17 +35,17 @@ class ApiService {
       console.warn('[ApiService] ⚠️ No token found in localStorage');
     }
 
-    // [2025-11-30] - Only send custom headers for events/all endpoint (to bypass token transformation)
-    // For other endpoints, use standard Authorization header to avoid CORS issues
-    const isEventsAllEndpoint = endpoint.includes('/events/all');
+    // [2025-11-30] - Only send custom headers for special endpoints to bypass token transformation
+    // [2026-01-07] - Include /media endpoint for workaround
+    const isSpecialEndpoint = endpoint.includes('/events/all') || endpoint.includes('/media');
 
     const config: RequestInit = {
       headers: {
         ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
         ...(token && {
           Authorization: `Bearer ${token}`,
-          // [2025-11-30] - WORKAROUND: Also send token in custom headers for events/all only
-          ...(isEventsAllEndpoint && {
+          // [2025-11-30] - WORKAROUND: Also send token in custom headers for special endpoints
+          ...(isSpecialEndpoint && {
             'X-User-Token': token,
             'X-Supabase-Token': token,
             'X-Original-Authorization': `Bearer ${token}`
