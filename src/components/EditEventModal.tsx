@@ -379,7 +379,9 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       await onSave(updateData);
       onClose();
     } catch (err: any) {
-      setError(err?.message || 'Failed to update event');
+      console.error('[EditEventModal] Save error:', err);
+      const detail = err?.message || '';
+      setError(`Failed to update event${detail ? ': ' + detail : ''}`);
     } finally {
       setLoading(false);
     }
