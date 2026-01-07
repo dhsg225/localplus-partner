@@ -199,12 +199,12 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
 
   const loadFullEvent = async () => {
     if (!event) return;
-    
+
     setLoadingEvent(true);
     try {
       const response = await apiService.getEvent(event.id);
       const fullEvent = response.data?.data || response.data;
-      
+
       // Format dates for datetime-local inputs
       const formatDateTimeLocal = (dateString: string) => {
         const date = new Date(dateString);
@@ -227,7 +227,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       });
 
       // [2025-01-XX] - Initialize autocomplete search states with event data
-      setCategorySearch(fullEvent.event_type || '');
+      setCategorySearch('');
       setLocationSearch(fullEvent.location || '');
       if (fullEvent.organizer_id) {
         setSelectedOrganizerId(fullEvent.organizer_id);
@@ -252,11 +252,11 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       if (fullEvent.is_recurring && fullEvent.recurrence_rule) {
         const rule = fullEvent.recurrence_rule;
         setIsRecurring(true);
-        
+
         let endCondition: 'never' | 'until' | 'count' = 'never';
         let until = '';
         let count = null;
-        
+
         if (rule.until) {
           endCondition = 'until';
           until = new Date(rule.until).toISOString().split('T')[0];
@@ -292,7 +292,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
           additional_dates: []
         });
       }
-      
+
       setError(null);
     } catch (err: any) {
       console.error('[EditEventModal] Error loading event:', err);
@@ -422,7 +422,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                   Loading event details...
                 </div>
               )}
-              
+
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-600">
                   {error}
@@ -462,47 +462,89 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                   </select>
                 </div>
 
-                {/* Event Type - Autocomplete */}
+                {/* Event Type - Multi-select Autocomplete */}
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
+                    Categories
                   </label>
-                  <input
-                    type="text"
-                    value={categorySearch || formData.event_type || ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setCategorySearch(value);
-                      setFormData({ ...formData, event_type: value });
-                      setShowCategoryDropdown(true);
-                    }}
-                    onFocus={() => {
-                      setShowCategoryDropdown(true);
-                      if (categories.length === 0) {
-                        loadCategories();
-                      }
-                    }}
-                    onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Type to search categories..."
-                  />
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 bg-white min-h-[42px] flex flex-wrap gap-2 items-center">
+                    {/* Selected Chips */}
+                    {(() => {
+                      // Parse current event_type string into array of IDs
+                      const currentIds = formData.event_type
+                        ? String(formData.event_type).split(',').map(s => s.trim()).filter(Boolean)
+                        : [];
+
+                      return currentIds.map(id => {
+                        const cat = categories.find(c => String(c.term_id) === id);
+                        const label = cat ? cat.name : id;
+                        return (
+                          <div key={id} className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                            <span>{label}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newIds = currentIds.filter(cid => cid !== id);
+                                setFormData({ ...formData, event_type: newIds.join(', ') });
+                              }}
+                              className="w-4 h-4 flex items-center justify-center hover:bg-blue-200 rounded-full text-blue-600"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      });
+                    })()}
+
+                    {/* Search Input */}
+                    <input
+                      type="text"
+                      value={categorySearch}
+                      onChange={(e) => {
+                        setCategorySearch(e.target.value);
+                        setShowCategoryDropdown(true);
+                      }}
+                      onFocus={() => setShowCategoryDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
+                      className="flex-1 min-w-[100px] outline-none text-sm"
+                      placeholder={formData.event_type ? "" : "Search categories..."}
+                    />
+                  </div>
+
                   {showCategoryDropdown && categories.length > 0 && (
                     <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {categories.map((cat) => (
-                        <button
-                          key={cat.term_id}
-                          type="button"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setFormData({ ...formData, event_type: cat.name });
-                            setCategorySearch(cat.name);
-                            setShowCategoryDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
-                        >
-                          {cat.name}
-                        </button>
-                      ))}
+                      {categories
+                        .filter(cat => {
+                          const currentIds = formData.event_type
+                            ? String(formData.event_type).split(',').map(s => s.trim()).filter(Boolean)
+                            : [];
+                          // Exclude already selected
+                          if (currentIds.includes(String(cat.term_id))) return false;
+                          // Filter by search
+                          if (!categorySearch) return true;
+                          return cat.name.toLowerCase().includes(categorySearch.toLowerCase());
+                        })
+                        .map((cat) => (
+                          <button
+                            key={cat.term_id}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              // Append new ID to comma-separated list
+                              const currentIds = formData.event_type
+                                ? String(formData.event_type).split(',').map(s => s.trim()).filter(Boolean)
+                                : [];
+                              const newIds = [...currentIds, String(cat.term_id)];
+                              setFormData({ ...formData, event_type: newIds.join(', ') });
+                              setCategorySearch(''); // Clear search after selection
+                              // Keep dropdown open for multiple selections
+                              // setShowCategoryDropdown(false); 
+                            }}
+                            className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
                     </div>
                   )}
                   {loadingCategories && (
@@ -794,11 +836,10 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                                     : [...recurrenceData.byweekday, day.value];
                                   setRecurrenceData({ ...recurrenceData, byweekday: newWeekdays });
                                 }}
-                                className={`px-3 py-1 text-sm rounded-md border ${
-                                  recurrenceData.byweekday.includes(day.value)
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                }`}
+                                className={`px-3 py-1 text-sm rounded-md border ${recurrenceData.byweekday.includes(day.value)
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                  }`}
                               >
                                 {day.label}
                               </button>
