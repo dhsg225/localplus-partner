@@ -440,17 +440,38 @@ class ApiService {
     formData.append('file', file);
     if (businessId) formData.append('business_id', businessId);
 
-    // [2026-01-07] - Use custom headers to bypass any proxy issues if needed
-    // But standard FormData fetch is usually fine with Authorization header
-    return this.request('/api/media', {
+    // [2026-01-07] - For FormData uploads, we need to let the browser set Content-Type
+    // but still include auth headers. We'll bypass the normal request() method.
+    const token = localStorage.getItem('auth_token');
+    const url = `${import.meta.env.VITE_API_BASE_URL || 'https://api.localplus.city'}/api/media`;
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      // Include workaround headers for /media endpoint
+      headers['X-User-Token'] = token;
+      headers['X-Supabase-Token'] = token;
+      headers['X-Original-Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
       method: 'POST',
-      body: formData,
-      // Note: Don't set Content-Type header manually for FormData, 
-      // fetch will set it correctly with the boundary
-      headers: {
-        'Content-Type': 'undefined' // Hack to bypass default 'application/json' in this.request
-      }
+      headers,
+      body: formData
     });
+
+    if (!response.ok) {
+      let errorMessage = `Upload failed: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch (e) {
+        // Response not JSON
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
   }
 
   async getMedia(params: { limit?: number; offset?: number } = {}) {
