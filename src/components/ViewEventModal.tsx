@@ -22,6 +22,7 @@ interface EventRecord {
   learn_more_url?: string;
   venue_latitude?: number;
   venue_longitude?: number;
+  timezone_id?: string;
   metadata?: {
     eventon_organizer_id?: string;
     organizer_name?: string;
@@ -162,7 +163,7 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
                     const gradientDiv = document.createElement('div');
                     gradientDiv.className = 'absolute inset-0';
                     gradientDiv.style.background = `linear-gradient(135deg, ${categoryColor} 0%, ${categoryColor}dd 100%)`;
-                    
+
                     // Add decorative pattern
                     const patternSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                     patternSvg.setAttribute('class', 'absolute inset-0 opacity-10');
@@ -187,7 +188,7 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
                     rect.setAttribute('fill', `url(#grid-${event.id})`);
                     patternSvg.appendChild(rect);
                     gradientDiv.appendChild(patternSvg);
-                    
+
                     // Add icon overlay
                     const iconDiv = document.createElement('div');
                     iconDiv.className = 'absolute inset-0 flex items-center justify-center opacity-20';
@@ -444,12 +445,11 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Status:</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          event.status === 'published' ? 'bg-green-100 text-green-800' :
-                          event.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                          event.status === 'scraped_draft' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.status === 'published' ? 'bg-green-100 text-green-800' :
+                            event.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                              event.status === 'scraped_draft' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                          }`}>
                           {event.status}
                         </span>
                       </div>
