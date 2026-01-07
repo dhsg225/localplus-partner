@@ -8,15 +8,15 @@ class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     const token = localStorage.getItem('auth_token');
-    
+
     // [2025-11-29] - Debug logging to see actual URL being called
     console.log('[ApiService] Request URL:', url);
     console.log('[ApiService] API_BASE_URL:', API_BASE_URL);
-    
+
     // [2025-11-30] - Debug: Log token info and decode to check algorithm
     if (token) {
       console.log('[ApiService] Token present, length:', token.length, 'starts with:', token.substring(0, 20) + '...');
-      
+
       // [2025-11-30] - Decode token to check algorithm (for debugging token transformation)
       try {
         const tokenParts = token.split('.');
@@ -34,15 +34,15 @@ class ApiService {
     } else {
       console.warn('[ApiService] ⚠️ No token found in localStorage');
     }
-    
+
     // [2025-11-30] - Only send custom headers for events/all endpoint (to bypass token transformation)
     // For other endpoints, use standard Authorization header to avoid CORS issues
     const isEventsAllEndpoint = endpoint.includes('/events/all');
-    
+
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
-        ...(token && { 
+        ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+        ...(token && {
           Authorization: `Bearer ${token}`,
           // [2025-11-30] - WORKAROUND: Also send token in custom headers for events/all only
           ...(isEventsAllEndpoint && {
@@ -56,8 +56,13 @@ class ApiService {
       ...options,
     };
 
+    // Remove Content-Type if it was set to 'undefined' (hack for bypassing default)
+    if (config.headers && (config.headers as any)['Content-Type'] === 'undefined') {
+      delete (config.headers as any)['Content-Type'];
+    }
+
     const response = await fetch(url, config);
-    
+
     // [2025-11-29] - Better error handling to see actual error message
     if (!response.ok) {
       let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
@@ -70,7 +75,7 @@ class ApiService {
       }
       throw new Error(errorMessage);
     }
-    
+
     return response.json();
   }
 
@@ -94,7 +99,7 @@ class ApiService {
   async register(email: string, password: string, businessType: string, businessName: string) {
     const url = `${API_BASE_URL}/api/auth/register`;
     console.log('[ApiService] Registration request URL:', url);
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -102,7 +107,7 @@ class ApiService {
       },
       body: JSON.stringify({ email, password, business_type: businessType, business_name: businessName }),
     });
-    
+
     if (!response.ok) {
       let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
       try {
@@ -114,7 +119,7 @@ class ApiService {
       }
       throw new Error(errorMessage);
     }
-    
+
     return response.json();
   }
 
@@ -131,7 +136,7 @@ class ApiService {
       limit: limit.toString(),
       offset: offset.toString(),
     });
-    
+
     if (status) {
       params.append('status', status);
     }
@@ -167,7 +172,7 @@ class ApiService {
   async seatBooking(id: string) {
     return this.request(`/api/bookings/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         status: 'seated',
         seated_at: new Date().toISOString()
       }),
@@ -177,7 +182,7 @@ class ApiService {
   async completeBooking(id: string) {
     return this.request(`/api/bookings/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         status: 'completed',
         completed_at: new Date().toISOString()
       }),
@@ -361,7 +366,7 @@ class ApiService {
     sortOrder?: 'asc' | 'desc';
   } = {}) {
     const searchParams = new URLSearchParams();
-    
+
     if (params.limit) searchParams.set('limit', String(params.limit));
     if (params.offset) searchParams.set('offset', String(params.offset));
     if (params.city) searchParams.set('city', params.city);
@@ -429,7 +434,38 @@ class ApiService {
     });
   }
 
-  // [2025-12-02] - DMO Dashboard endpoints
+  // [2026-01-07] - Media Manager endpoints
+  async uploadMedia(file: File, businessId?: string) {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (businessId) formData.append('business_id', businessId);
+
+    // [2026-01-07] - Use custom headers to bypass any proxy issues if needed
+    // But standard FormData fetch is usually fine with Authorization header
+    return this.request('/api/media', {
+      method: 'POST',
+      body: formData,
+      // Note: Don't set Content-Type header manually for FormData, 
+      // fetch will set it correctly with the boundary
+      headers: {
+        'Content-Type': 'undefined' // Hack to bypass default 'application/json' in this.request
+      }
+    });
+  }
+
+  async getMedia(params: { limit?: number; offset?: number } = {}) {
+    const searchParams = new URLSearchParams();
+    if (params.limit) searchParams.set('limit', String(params.limit));
+    if (params.offset) searchParams.set('offset', String(params.offset));
+
+    const query = searchParams.toString();
+    const endpoint = query ? `/api/media?${query}` : '/api/media';
+
+    return this.request(endpoint, {
+      method: 'GET',
+    });
+  }
+
   async getDMOStats() {
     // TODO: Implement when API endpoint is ready
     return this.request('/api/dmo/stats', {

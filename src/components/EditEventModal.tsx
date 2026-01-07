@@ -2,6 +2,7 @@
 // [2025-12-05] - Added recurrence support
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/apiService';
+import MediaPicker from './MediaPicker';
 
 interface EventRecord {
   id: string;
@@ -16,6 +17,7 @@ interface EventRecord {
   updated_at: string;
   location?: string;
   venue_area?: string;
+  hero_image_url?: string;
   is_recurring?: boolean;
   recurrence_rule?: {
     frequency: string;
@@ -48,6 +50,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingEvent, setLoadingEvent] = useState(false);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
 
   // [2025-01-XX] - Autocomplete state for Category, Location, Organizer, Calendar
   const [categories, setCategories] = useState<any[]>([]);
@@ -223,7 +226,8 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         location: fullEvent.location || '',
         venue_area: fullEvent.venue_area || '',
         start_time: formatDateTimeLocal(fullEvent.start_time),
-        end_time: formatDateTimeLocal(fullEvent.end_time)
+        end_time: formatDateTimeLocal(fullEvent.end_time),
+        hero_image_url: fullEvent.hero_image_url || ''
       });
 
       // [2025-01-XX] - Initialize autocomplete search states with event data
@@ -462,6 +466,60 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                     <option value="scraped_draft">Scraped Draft</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
+                </div>
+
+                {/* Hero Image */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hero Image
+                  </label>
+                  <div className="flex items-start gap-4">
+                    {formData.hero_image_url ? (
+                      <div className="relative w-40 h-24 bg-gray-100 rounded-md overflow-hidden border border-gray-200">
+                        <img
+                          src={`${formData.hero_image_url}?width=400`}
+                          alt="Hero preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, hero_image_url: '' })}
+                          className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-sm"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaPicker(true)}
+                        className="w-40 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        <svg className="w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span className="text-xs text-gray-500 font-medium">Add Photo</span>
+                      </button>
+                    )}
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={formData.hero_image_url || ''}
+                        onChange={(e) => setFormData({ ...formData, hero_image_url: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mb-2"
+                        placeholder="Image URL or use picker"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaPicker(true)}
+                        className="text-sm text-blue-600 font-medium hover:text-blue-700"
+                      >
+                        Open Media Manager
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Event Type - Multi-select Autocomplete */}
@@ -1093,6 +1151,13 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
           </form>
         </div>
       </div>
+
+      <MediaPicker
+        visible={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={(url) => setFormData({ ...formData, hero_image_url: url })}
+        title="Select Event Hero Image"
+      />
     </div>
   );
 };

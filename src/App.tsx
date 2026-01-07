@@ -7,6 +7,7 @@ import LoginForm from './components/LoginForm';
 import Dashboard from './pages/Dashboard';
 import BookingDashboard from './pages/BookingDashboard';
 import NotificationSettings from './pages/NotificationSettings';
+import Settings from './pages/Settings'; // [2025-12-03] - Settings page
 import Structure from './pages/Structure';
 import EventsDashboard from './pages/EventsDashboard'; // [2025-11-28 23:35] - Partner Events dashboard
 import AdminUsers from './pages/AdminUsers'; // [2025-11-26] - Admin page for viewing partners/users
@@ -81,6 +82,7 @@ function App() {
     if (path === '/dashboard' || path === '/') return 'dashboard';
     if (path === '/bookings') return 'bookings';
     if (path === '/notifications') return 'notifications';
+    if (path === '/settings') return 'settings'; // [2025-12-03] - Settings page
     if (path === '/events') return 'events'; // [2025-11-28 23:35] - Highlight Events tab
     if (path === '/admin') return 'admin'; // [2025-11-26] - Highlight Admin tab
     if (path === '/taxonomy') return 'taxonomy'; // [2025-11-30] - Highlight Taxonomy tab
@@ -129,6 +131,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/bookings" element={<BookingDashboard />} />
           <Route path="/notifications" element={<NotificationSettings />} />
+          <Route path="/settings" element={<Settings />} /> {/* [2025-12-03] - Settings page with tabs */}
           <Route path="/events" element={<EventsDashboard />} />
           <Route path="/admin" element={<AdminUsers />} />
           <Route path="/taxonomy" element={<EventTaxonomyManager />} />

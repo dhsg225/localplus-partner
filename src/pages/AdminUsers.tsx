@@ -46,6 +46,15 @@ const AdminUsers: React.FC = () => {
     loadBusinesses();
   }, []);
 
+  // [2025-12-06] - Auto-refresh partners list every 30 seconds to catch new registrations
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadPartners();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const loadBusinesses = async () => {
     try {
       const { data, error } = await supabase
