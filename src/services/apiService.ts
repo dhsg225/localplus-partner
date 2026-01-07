@@ -487,6 +487,12 @@ class ApiService {
     });
   }
 
+  async deleteMedia(mediaId: string) {
+    return this.request(`/api/media/${mediaId}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getDMOStats() {
     // TODO: Implement when API endpoint is ready
     return this.request('/api/dmo/stats', {
