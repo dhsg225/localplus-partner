@@ -81,7 +81,7 @@ const Navigation: React.FC<NavigationProps> = ({
             <div className="flex flex-col items-start">
               <h1 className="text-xl font-bold text-gray-900">LocalPlus Partner</h1>
               <span className="text-[10px] text-gray-400 font-normal leading-none mt-0.5">
-                v0.2.14
+                v0.2.15
               </span>
             </div>
             <div className="text-sm text-gray-500">Loading menus...</div>
@@ -107,7 +107,7 @@ const Navigation: React.FC<NavigationProps> = ({
               LocalPlus
             </h1>
             <span className="text-[10px] text-gray-400 font-normal leading-none mt-0.5">
-              v0.2.14
+              v0.2.15
             </span>
           </div>
 
@@ -129,8 +129,8 @@ const Navigation: React.FC<NavigationProps> = ({
                         <button
                           onClick={() => setShowEventsDropdown(!showEventsDropdown)}
                           className={`inline-flex items-center px-4 pt-1 border-b-2 text-sm font-medium whitespace-nowrap ${isActive || currentPage === 'venues' || currentPage === 'categories' || currentPage === 'taxonomy' || currentPage === 'locations'
-                              ? 'border-blue-500 text-gray-900'
-                              : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                            ? 'border-blue-500 text-gray-900'
+                            : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                             }`}
                           title={item.description}
                         >
@@ -207,8 +207,8 @@ const Navigation: React.FC<NavigationProps> = ({
                       key={item.id}
                       onClick={() => onPageChange(routeKey)}
                       className={`inline-flex items-center px-4 pt-1 border-b-2 text-sm font-medium whitespace-nowrap ${isActive
-                          ? 'border-blue-500 text-gray-900'
-                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                        ? 'border-blue-500 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                         }`}
                       title={item.description}
                     >
@@ -286,8 +286,8 @@ const Navigation: React.FC<NavigationProps> = ({
             <button
               onClick={() => onPageChange('admin')}
               className={`text-sm whitespace-nowrap px-2 ${currentPage === 'admin'
-                  ? 'text-blue-600 font-semibold'
-                  : 'text-gray-500 hover:text-gray-700'
+                ? 'text-blue-600 font-semibold'
+                : 'text-gray-500 hover:text-gray-700'
                 }`}
               title="View all users and partners"
             >
