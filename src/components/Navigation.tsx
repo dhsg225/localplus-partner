@@ -10,12 +10,12 @@ interface NavigationProps {
   showAdminLink?: boolean;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ 
-  currentPage, 
-  onPageChange, 
-  user, 
+const Navigation: React.FC<NavigationProps> = ({
+  currentPage,
+  onPageChange,
+  user,
   onLogout,
-  showAdminLink = false 
+  showAdminLink = false
 }) => {
   const [navItems, setNavItems] = useState<MenuItem[]>([]);
   const [businessType, setBusinessType] = useState<BusinessType | null>(null);
@@ -43,7 +43,7 @@ const Navigation: React.FC<NavigationProps> = ({
 
         // Determine which type to use (override or partner's type)
         const typeToUse = overrideType || partnerType?.key || 'restaurant';
-        
+
         // Load menus for the selected type
         const menus = await menuService.getMenusForBusinessType(typeToUse);
         setNavItems(menus);
@@ -80,9 +80,9 @@ const Navigation: React.FC<NavigationProps> = ({
           <div className="flex justify-between h-16 items-center">
             <div className="flex flex-col items-start">
               <h1 className="text-xl font-bold text-gray-900">LocalPlus Partner</h1>
-            <span className="text-[10px] text-gray-400 font-normal leading-none mt-0.5">
-              v0.2.13
-            </span>
+              <span className="text-[10px] text-gray-400 font-normal leading-none mt-0.5">
+                v0.2.14
+              </span>
             </div>
             <div className="text-sm text-gray-500">Loading menus...</div>
           </div>
@@ -91,8 +91,8 @@ const Navigation: React.FC<NavigationProps> = ({
     );
   }
 
-  const activeType = overrideType 
-    ? availableTypes.find(t => t.key === overrideType) 
+  const activeType = overrideType
+    ? availableTypes.find(t => t.key === overrideType)
     : businessType;
 
   // [2025-12-01] - Show all menu items directly (no "More" dropdown needed with more space)
@@ -107,10 +107,10 @@ const Navigation: React.FC<NavigationProps> = ({
               LocalPlus
             </h1>
             <span className="text-[10px] text-gray-400 font-normal leading-none mt-0.5">
-              v0.2.13
+              v0.2.14
             </span>
           </div>
-          
+
           {/* Menu items - center area with more space - show all items */}
           <div className="flex-1 flex justify-center items-center min-w-0 px-4">
             <div className="hidden sm:flex sm:space-x-6 items-center">
@@ -118,111 +118,105 @@ const Navigation: React.FC<NavigationProps> = ({
               {navItems
                 .filter(item => item.key !== 'venues' && item.key !== 'categories' && item.key !== 'taxonomy' && item.key !== 'settings')
                 .map((item) => {
-                const routeKey = item.route?.replace(/^\//, '') || item.key;
-                const isActive = currentPage === routeKey || currentPage === item.key;
-                const isEvents = item.key === 'events';
-                
-                if (isEvents) {
-                  // Events with dropdown for Venues and Categories
-                  return (
-                    <div key={item.id} className="relative">
-                      <button
-                        onClick={() => setShowEventsDropdown(!showEventsDropdown)}
-                        className={`inline-flex items-center px-4 pt-1 border-b-2 text-sm font-medium whitespace-nowrap ${
-                          isActive || currentPage === 'venues' || currentPage === 'categories' || currentPage === 'taxonomy' || currentPage === 'locations'
-                            ? 'border-blue-500 text-gray-900'
-                            : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                        }`}
-                        title={item.description}
-                      >
-                        <span className="mr-1.5">{item.icon}</span>
-                        {item.label}
-                        <svg className="ml-1.5 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                      
-                      {showEventsDropdown && (
-                        <>
-                          <div 
-                            className="fixed inset-0 z-40" 
-                            onClick={() => setShowEventsDropdown(false)}
-                          />
-                          <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg z-50 border border-gray-200">
-                            <div className="py-1">
-                              <button
-                                onClick={() => {
-                                  onPageChange(routeKey);
-                                  setShowEventsDropdown(false);
-                                }}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 ${
-                                  isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                                }`}
-                              >
-                                <span className="mr-2">{item.icon}</span>
-                                Events
-                              </button>
-                              <button
-                                onClick={() => {
-                                  onPageChange('venues');
-                                  setShowEventsDropdown(false);
-                                }}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 ${
-                                  currentPage === 'venues' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                                }`}
-                              >
-                                <span className="mr-2">📍</span>
-                                Venues
-                              </button>
-                              <button
-                                onClick={() => {
-                                  onPageChange('categories');
-                                  setShowEventsDropdown(false);
-                                }}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 ${
-                                  currentPage === 'categories' || currentPage === 'taxonomy' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                                }`}
-                              >
-                                <span className="mr-2">🏷️</span>
-                                Categories
-                              </button>
-                              <button
-                                onClick={() => {
-                                  onPageChange('locations');
-                                  setShowEventsDropdown(false);
-                                }}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 ${
-                                  currentPage === 'locations' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                                }`}
-                              >
-                                <span className="mr-2">📍</span>
-                                Locations
-                              </button>
+                  const routeKey = item.route?.replace(/^\//, '') || item.key;
+                  const isActive = currentPage === routeKey || currentPage === item.key;
+                  const isEvents = item.key === 'events';
+
+                  if (isEvents) {
+                    // Events with dropdown for Venues and Categories
+                    return (
+                      <div key={item.id} className="relative">
+                        <button
+                          onClick={() => setShowEventsDropdown(!showEventsDropdown)}
+                          className={`inline-flex items-center px-4 pt-1 border-b-2 text-sm font-medium whitespace-nowrap ${isActive || currentPage === 'venues' || currentPage === 'categories' || currentPage === 'taxonomy' || currentPage === 'locations'
+                              ? 'border-blue-500 text-gray-900'
+                              : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                            }`}
+                          title={item.description}
+                        >
+                          <span className="mr-1.5">{item.icon}</span>
+                          {item.label}
+                          <svg className="ml-1.5 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+
+                        {showEventsDropdown && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-40"
+                              onClick={() => setShowEventsDropdown(false)}
+                            />
+                            <div className="absolute left-0 mt-2 w-56 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => {
+                                    onPageChange(routeKey);
+                                    setShowEventsDropdown(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 ${isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                    }`}
+                                >
+                                  <span className="mr-2">{item.icon}</span>
+                                  Events
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    onPageChange('venues');
+                                    setShowEventsDropdown(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 ${currentPage === 'venues' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                    }`}
+                                >
+                                  <span className="mr-2">📍</span>
+                                  Venues
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    onPageChange('categories');
+                                    setShowEventsDropdown(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 ${currentPage === 'categories' || currentPage === 'taxonomy' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                    }`}
+                                >
+                                  <span className="mr-2">🏷️</span>
+                                  Categories
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    onPageChange('locations');
+                                    setShowEventsDropdown(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 ${currentPage === 'locations' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                    }`}
+                                >
+                                  <span className="mr-2">📍</span>
+                                  Locations
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // Regular menu items
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onPageChange(routeKey)}
+                      className={`inline-flex items-center px-4 pt-1 border-b-2 text-sm font-medium whitespace-nowrap ${isActive
+                          ? 'border-blue-500 text-gray-900'
+                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                        }`}
+                      title={item.description}
+                    >
+                      <span className="mr-1.5">{item.icon}</span>
+                      {item.label}
+                    </button>
                   );
-                }
-                
-                // Regular menu items
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => onPageChange(routeKey)}
-                    className={`inline-flex items-center px-4 pt-1 border-b-2 text-sm font-medium whitespace-nowrap ${
-                      isActive
-                        ? 'border-blue-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    }`}
-                    title={item.description}
-                  >
-                    <span className="mr-1.5">{item.icon}</span>
-                    {item.label}
-                  </button>
-                );
-              })}
+                })}
             </div>
           </div>
 
@@ -249,42 +243,40 @@ const Navigation: React.FC<NavigationProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                   </button>
-                  
+
                   {showTypeSelector && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-md shadow-lg z-50 border border-gray-200">
-                  <div className="py-1">
-                    <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase border-b">
-                      View Menus As:
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+                      <div className="py-1">
+                        <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase border-b">
+                          View Menus As:
+                        </div>
+                        <button
+                          onClick={() => handleTypeOverride(null)}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${!overrideType ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                            }`}
+                        >
+                          {businessType ? (
+                            <>
+                              <span className="mr-2">{businessType.icon}</span>
+                              {businessType.name} (Default)
+                            </>
+                          ) : (
+                            'No Type Assigned'
+                          )}
+                        </button>
+                        {availableTypes.map((type) => (
+                          <button
+                            key={type.id}
+                            onClick={() => handleTypeOverride(type.key)}
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${overrideType === type.key ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                              }`}
+                          >
+                            <span className="mr-2">{type.icon}</span>
+                            {type.name}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleTypeOverride(null)}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                        !overrideType ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                      }`}
-                    >
-                      {businessType ? (
-                        <>
-                          <span className="mr-2">{businessType.icon}</span>
-                          {businessType.name} (Default)
-                        </>
-                      ) : (
-                        'No Type Assigned'
-                      )}
-                    </button>
-                    {availableTypes.map((type) => (
-                      <button
-                        key={type.id}
-                        onClick={() => handleTypeOverride(type.key)}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                          overrideType === type.key ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                        }`}
-                      >
-                        <span className="mr-2">{type.icon}</span>
-                        {type.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
                   )}
                 </div>
               </div>
@@ -293,16 +285,15 @@ const Navigation: React.FC<NavigationProps> = ({
             {/* Admin Users Link */}
             <button
               onClick={() => onPageChange('admin')}
-              className={`text-sm whitespace-nowrap px-2 ${
-                currentPage === 'admin'
+              className={`text-sm whitespace-nowrap px-2 ${currentPage === 'admin'
                   ? 'text-blue-600 font-semibold'
                   : 'text-gray-500 hover:text-gray-700'
-              }`}
+                }`}
               title="View all users and partners"
             >
               👥 Users
             </button>
-            
+
             {showAdminLink && (
               <a
                 href="https://admin-3c726yywc-shannons-projects-3f909922.vercel.app"
@@ -313,7 +304,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 Admin Panel
               </a>
             )}
-            
+
             {/* Profile icon with dropdown */}
             <div className="relative border-l border-gray-200 pl-3">
               <button
@@ -324,12 +315,12 @@ const Navigation: React.FC<NavigationProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </button>
-              
+
               {showProfileDropdown && (
                 <>
                   {/* Click outside to close */}
-                  <div 
-                    className="fixed inset-0 z-40" 
+                  <div
+                    className="fixed inset-0 z-40"
                     onClick={() => setShowProfileDropdown(false)}
                   />
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-50 border border-gray-200">
@@ -352,16 +343,15 @@ const Navigation: React.FC<NavigationProps> = ({
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Settings button */}
                       <button
                         onClick={() => {
                           onPageChange('settings');
                           setShowProfileDropdown(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 transition-colors ${
-                          currentPage === 'settings' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                        }`}
+                        className={`w-full text-left px-4 py-2 text-sm flex items-center hover:bg-gray-100 transition-colors ${currentPage === 'settings' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                          }`}
                       >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -369,7 +359,7 @@ const Navigation: React.FC<NavigationProps> = ({
                         </svg>
                         Settings
                       </button>
-                      
+
                       {/* Logout button */}
                       <button
                         onClick={() => {
@@ -388,11 +378,11 @@ const Navigation: React.FC<NavigationProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* Close dropdowns on outside click */}
       {(showTypeSelector || showProfileDropdown || showEventsDropdown) && (
-        <div 
-          className="fixed inset-0 z-40" 
+        <div
+          className="fixed inset-0 z-40"
           onClick={() => {
             setShowTypeSelector(false);
             setShowProfileDropdown(false);
