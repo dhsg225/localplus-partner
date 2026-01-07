@@ -205,19 +205,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           return `${year}-${month}-${day}T${hours}:${minutes}`;
         };
 
-        // [2025-01-XX] - Translate category IDs to names if needed
+        // [2025-01-XX] - Keep category IDs as-is (multi-select component handles display)
         let eventType = initialData.event_type || 'general';
-        if (eventType && /^[0-9, ]+$/.test(eventType)) {
-          // It looks like a comma-separated list of IDs
-          const ids = eventType.split(',').map((s: string) => s.trim()).filter(Boolean);
-          if (ids.length > 0 && categories.length > 0) {
-            const names = ids.map((id: string) => {
-              const cat = categories.find(c => String(c.term_id) === id);
-              return cat ? cat.name : id;
-            });
-            eventType = names.join(', ');
-          }
-        }
 
         setFormData({
           title: `${initialData.title} (Copy)`,
@@ -299,22 +288,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     }
   }, [visible, initialData]);
 
-  // [2025-01-XX] - Re-translate category IDs once categories are loaded
-  useEffect(() => {
-    if (visible && initialData && categories.length > 0) {
-      const eventType = formData.event_type;
-      if (eventType && /^[0-9, ]+$/.test(eventType)) {
-        const ids = eventType.split(',').map((s: string) => s.trim()).filter(Boolean);
-        const names = ids.map((id: string) => {
-          const cat = categories.find(c => String(c.term_id) === id);
-          return cat ? cat.name : id;
-        });
-        if (names.some(n => n !== ids[0] || ids.length > 1)) {
-          setFormData(prev => ({ ...prev, event_type: names.join(', ') }));
-        }
-      }
-    }
-  }, [categories, visible, initialData]);
+
 
   // [2025-01-XX] - Update organizer search when organizers are loaded
   useEffect(() => {
@@ -621,42 +595,89 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   </select>
                 </div>
 
-                {/* Event Type - Autocomplete */}
+                {/* Event Type - Multi-select Autocomplete */}
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
+                    Categories
                   </label>
-                  <input
-                    type="text"
-                    value={categorySearch || formData.event_type}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setCategorySearch(value);
-                      setFormData({ ...formData, event_type: value });
-                      setShowCategoryDropdown(true);
-                    }}
-                    onFocus={() => setShowCategoryDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Type to search categories..."
-                  />
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 bg-white min-h-[42px] flex flex-wrap gap-2 items-center">
+                    {/* Selected Chips */}
+                    {(() => {
+                      // Parse current event_type string into array of IDs
+                      const currentIds = formData.event_type
+                        ? String(formData.event_type).split(',').map(s => s.trim()).filter(Boolean)
+                        : [];
+
+                      return currentIds.map(id => {
+                        const cat = categories.find(c => String(c.term_id) === id);
+                        const label = cat ? cat.name : id;
+                        return (
+                          <div key={id} className="flex items-center gap-1 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                            <span>{label}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newIds = currentIds.filter(cid => cid !== id);
+                                setFormData({ ...formData, event_type: newIds.join(', ') });
+                              }}
+                              className="w-4 h-4 flex items-center justify-center hover:bg-blue-200 rounded-full text-blue-600"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      });
+                    })()}
+
+                    {/* Search Input */}
+                    <input
+                      type="text"
+                      value={categorySearch}
+                      onChange={(e) => {
+                        setCategorySearch(e.target.value);
+                        setShowCategoryDropdown(true);
+                      }}
+                      onFocus={() => setShowCategoryDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
+                      className="flex-1 min-w-[100px] outline-none text-sm"
+                      placeholder={formData.event_type ? "" : "Search categories..."}
+                    />
+                  </div>
+
                   {showCategoryDropdown && categories.length > 0 && (
                     <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {categories.map((cat) => (
-                        <button
-                          key={cat.term_id}
-                          type="button"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setFormData({ ...formData, event_type: cat.name });
-                            setCategorySearch(cat.name);
-                            setShowCategoryDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
-                        >
-                          {cat.name}
-                        </button>
-                      ))}
+                      {categories
+                        .filter(cat => {
+                          const currentIds = formData.event_type
+                            ? String(formData.event_type).split(',').map(s => s.trim()).filter(Boolean)
+                            : [];
+                          // Exclude already selected
+                          if (currentIds.includes(String(cat.term_id))) return false;
+                          // Filter by search
+                          if (!categorySearch) return true;
+                          return cat.name.toLowerCase().includes(categorySearch.toLowerCase());
+                        })
+                        .map((cat) => (
+                          <button
+                            key={cat.term_id}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              // Append new ID to comma-separated list
+                              const currentIds = formData.event_type
+                                ? String(formData.event_type).split(',').map(s => s.trim()).filter(Boolean)
+                                : [];
+                              const newIds = [...currentIds, String(cat.term_id)];
+                              setFormData({ ...formData, event_type: newIds.join(', ') });
+                              setCategorySearch(''); // Clear search after selection
+                              // Keep dropdown open for multiple selections
+                              // setShowCategoryDropdown(false); 
+                            }}
+                            className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
                     </div>
                   )}
                   {loadingCategories && (
