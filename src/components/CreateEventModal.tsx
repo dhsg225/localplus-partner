@@ -28,7 +28,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // [2025-12-01] - Organizer state
   const [organizers, setOrganizers] = useState<any[]>([]);
   const [selectedOrganizerId, setSelectedOrganizerId] = useState<string>('');
@@ -205,12 +205,26 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           return `${year}-${month}-${day}T${hours}:${minutes}`;
         };
 
+        // [2025-01-XX] - Translate category IDs to names if needed
+        let eventType = initialData.event_type || 'general';
+        if (eventType && /^[0-9, ]+$/.test(eventType)) {
+          // It looks like a comma-separated list of IDs
+          const ids = eventType.split(',').map((s: string) => s.trim()).filter(Boolean);
+          if (ids.length > 0 && categories.length > 0) {
+            const names = ids.map((id: string) => {
+              const cat = categories.find(c => String(c.term_id) === id);
+              return cat ? cat.name : id;
+            });
+            eventType = names.join(', ');
+          }
+        }
+
         setFormData({
           title: `${initialData.title} (Copy)`,
           description: initialData.description || '',
           subtitle: initialData.subtitle || '',
           status: 'draft', // Always set to draft for duplicates
-          event_type: initialData.event_type || 'general',
+          event_type: eventType,
           location: initialData.location || '',
           venue_area: initialData.venue_area || '',
           start_time: initialData.start_time ? formatDateTimeLocal(initialData.start_time) : '',
@@ -220,6 +234,14 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         // Set organizer if present
         if (initialData.organizer_id) {
           setSelectedOrganizerId(initialData.organizer_id);
+          // If we have organizers loaded, set the search text to the name
+          const org = organizers.find(o => o.id === initialData.organizer_id);
+          if (org) {
+            setOrganizerSearch(org.name);
+          }
+        } else if (initialData.metadata?.eventon_organizer_id) {
+          // Fallback for legacy data
+          setOrganizerSearch(`Legacy ID: ${initialData.metadata.eventon_organizer_id}`);
         }
 
         // Handle recurrence data if present
@@ -258,7 +280,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         const now = new Date();
         const start = new Date(now.getTime() + 60 * 60 * 1000); // +1 hour
         const end = new Date(now.getTime() + 3 * 60 * 60 * 1000); // +3 hours
-        
+
         const formatDateTimeLocal = (date: Date) => {
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -277,6 +299,33 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     }
   }, [visible, initialData]);
 
+  // [2025-01-XX] - Re-translate category IDs once categories are loaded
+  useEffect(() => {
+    if (visible && initialData && categories.length > 0) {
+      const eventType = formData.event_type;
+      if (eventType && /^[0-9, ]+$/.test(eventType)) {
+        const ids = eventType.split(',').map((s: string) => s.trim()).filter(Boolean);
+        const names = ids.map((id: string) => {
+          const cat = categories.find(c => String(c.term_id) === id);
+          return cat ? cat.name : id;
+        });
+        if (names.some(n => n !== ids[0] || ids.length > 1)) {
+          setFormData(prev => ({ ...prev, event_type: names.join(', ') }));
+        }
+      }
+    }
+  }, [categories, visible, initialData]);
+
+  // [2025-01-XX] - Update organizer search when organizers are loaded
+  useEffect(() => {
+    if (visible && initialData?.organizer_id && organizers.length > 0) {
+      const org = organizers.find(o => o.id === initialData.organizer_id);
+      if (org && !organizerSearch) {
+        setOrganizerSearch(org.name);
+      }
+    }
+  }, [organizers, visible, initialData]);
+
   // [2025-12-01] - Handle create new organizer
   const handleCreateOrganizer = async () => {
     if (!newOrganizer.name.trim()) {
@@ -287,12 +336,12 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     try {
       const response = await apiService.createOrganizer(newOrganizer);
       const createdOrganizer = response.data?.data || response.data;
-      
+
       // Add to organizers list and select it
       setOrganizers(prev => [...prev, createdOrganizer]);
       setSelectedOrganizerId(createdOrganizer.id);
       setShowCreateOrganizer(false);
-      
+
       // Reset new organizer form
       setNewOrganizer({
         name: '',
@@ -335,7 +384,9 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         end_time: endTime,
         timezone_id: 'Asia/Bangkok',
         // [2025-01-23] - Include calendar (inspired by EventON's calendar system)
-        calendar_slug: selectedCalendarSlug || calendarSearch || null
+        calendar_slug: selectedCalendarSlug || calendarSearch || null,
+        // [2025-01-XX] - Include organizer
+        organizer_id: selectedOrganizerId || null
       };
 
       // [2025-12-05] - Add recurrence_rules if event is recurring
@@ -377,7 +428,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       }
 
       await apiService.createEvent(eventData);
-      
+
       // Reset form
       setFormData({
         title: '',
@@ -390,7 +441,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         start_time: '',
         end_time: ''
       });
-      
+
       // [2025-12-05] - Reset recurrence
       setIsRecurring(false);
       setRecurrenceData({
@@ -837,11 +888,10 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                                     : [...recurrenceData.byweekday, day.value];
                                   setRecurrenceData({ ...recurrenceData, byweekday: newWeekdays });
                                 }}
-                                className={`px-3 py-1 text-sm rounded-md border ${
-                                  recurrenceData.byweekday.includes(day.value)
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                }`}
+                                className={`px-3 py-1 text-sm rounded-md border ${recurrenceData.byweekday.includes(day.value)
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                  }`}
                               >
                                 {day.label}
                               </button>
