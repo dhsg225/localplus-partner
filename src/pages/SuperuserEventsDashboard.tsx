@@ -152,7 +152,7 @@ const SuperuserEventsDashboard: React.FC = () => {
       // [2025-01-XX] - Verify session is fully set before querying
       // Wait a moment to ensure session propagation
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // Double-check session is still valid
       const { data: { user: verifyUser }, error: verifyError } = await supabase.auth.getUser();
       if (verifyError || !verifyUser) {
@@ -168,15 +168,15 @@ const SuperuserEventsDashboard: React.FC = () => {
       console.log('[SuperuserEventsDashboard] Session access_token present:', !!session?.access_token);
       console.log('[SuperuserEventsDashboard] RLS policy should match: user_id = auth.uid()');
       console.log('[SuperuserEventsDashboard] Expected: user_id =', supabaseUser.id, 'auth.uid() =', verifyUser.id);
-      
+
       // Test query: Try querying ALL roles first to see if RLS is working at all
       const { data: allRoles, error: allRolesError } = await supabase
         .from('user_roles')
         .select('*')
         .eq('user_id', supabaseUser.id);
-      
+
       console.log('[SuperuserEventsDashboard] Test query (all roles for user):', allRoles, 'error:', allRolesError);
-      
+
       // Now query with filters
       const { data: roles, error } = await supabase
         .from('user_roles')
@@ -199,7 +199,7 @@ const SuperuserEventsDashboard: React.FC = () => {
       const isSuperAdmin = (roles && roles.length > 0) || false;
       console.log('[SuperuserEventsDashboard] Super admin check result:', isSuperAdmin);
       console.log('[SuperuserEventsDashboard] Roles found:', roles);
-      
+
       return isSuperAdmin;
     } catch (err) {
       console.error('[SuperuserEventsDashboard] Error checking super admin:', err);
@@ -234,7 +234,7 @@ const SuperuserEventsDashboard: React.FC = () => {
       });
 
       console.log('[SuperuserEventsDashboard] API response:', response);
-      
+
       if (response.success) {
         const data = Array.isArray(response.data) ? response.data : [];
         setEvents(data);
@@ -332,14 +332,14 @@ const SuperuserEventsDashboard: React.FC = () => {
 
   const handleBulkDelete = async () => {
     if (selectedEvents.size === 0) return;
-    
+
     if (!confirm(`Are you sure you want to delete ${selectedEvents.size} event(s)? This action cannot be undone.`)) {
       return;
     }
 
     try {
       setLoading(true);
-      const deletePromises = Array.from(selectedEvents).map(eventId => 
+      const deletePromises = Array.from(selectedEvents).map(eventId =>
         apiService.superuserDeleteEvent(eventId, `Bulk delete via Superuser Dashboard`)
       );
       await Promise.all(deletePromises);
@@ -357,17 +357,17 @@ const SuperuserEventsDashboard: React.FC = () => {
 
     const eventIds = Array.from(selectedEvents);
     const total = eventIds.length;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       // [2025-12-05] - Process in batches of 10 to avoid overwhelming the API
       const batchSize = 10;
       let successCount = 0;
       let failCount = 0;
       const errors: string[] = [];
-      
+
       for (let i = 0; i < eventIds.length; i += batchSize) {
         const batch = eventIds.slice(i, i + batchSize);
         const batchPromises = batch.map(async (eventId) => {
@@ -382,21 +382,21 @@ const SuperuserEventsDashboard: React.FC = () => {
             return { eventId, success: false, error: errorMsg };
           }
         });
-        
+
         await Promise.all(batchPromises);
-        
+
         // Small delay between batches to avoid rate limiting
         if (i + batchSize < eventIds.length) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
-      
+
       if (failCount > 0) {
         setError(`Published ${successCount}/${total} events. ${failCount} failed. ${errors.slice(0, 3).join('; ')}${errors.length > 3 ? '...' : ''}`);
       } else {
         setError(null);
       }
-      
+
       setSelectedEvents(new Set());
       await loadEvents();
     } catch (err: any) {
@@ -411,16 +411,16 @@ const SuperuserEventsDashboard: React.FC = () => {
 
     const eventIds = Array.from(selectedEvents);
     const total = eventIds.length;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       // [2025-12-05] - Process in batches of 10
       const batchSize = 10;
       let successCount = 0;
       let failCount = 0;
-      
+
       for (let i = 0; i < eventIds.length; i += batchSize) {
         const batch = eventIds.slice(i, i + batchSize);
         const batchPromises = batch.map(async (eventId) => {
@@ -433,18 +433,18 @@ const SuperuserEventsDashboard: React.FC = () => {
             return { success: false };
           }
         });
-        
+
         await Promise.all(batchPromises);
-        
+
         if (i + batchSize < eventIds.length) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
-      
+
       if (failCount > 0) {
         setError(`Updated ${successCount}/${total} events. ${failCount} failed.`);
       }
-      
+
       setSelectedEvents(new Set());
       await loadEvents();
     } catch (err: any) {
@@ -463,16 +463,16 @@ const SuperuserEventsDashboard: React.FC = () => {
 
     const eventIds = Array.from(selectedEvents);
     const total = eventIds.length;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       // [2025-12-05] - Process in batches of 10
       const batchSize = 10;
       let successCount = 0;
       let failCount = 0;
-      
+
       for (let i = 0; i < eventIds.length; i += batchSize) {
         const batch = eventIds.slice(i, i + batchSize);
         const batchPromises = batch.map(async (eventId) => {
@@ -485,18 +485,18 @@ const SuperuserEventsDashboard: React.FC = () => {
             return { success: false };
           }
         });
-        
+
         await Promise.all(batchPromises);
-        
+
         if (i + batchSize < eventIds.length) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
-      
+
       if (failCount > 0) {
         setError(`Cancelled ${successCount}/${total} events. ${failCount} failed.`);
       }
-      
+
       setSelectedEvents(new Set());
       await loadEvents();
     } catch (err: any) {
@@ -553,7 +553,7 @@ const SuperuserEventsDashboard: React.FC = () => {
       setLoading(true);
       const response = await apiService.getEvent(eventId);
       const eventData = response.data?.data || response.data;
-      
+
       if (eventData) {
         setDuplicateEventData(eventData);
         setCreateModalVisible(true);
@@ -618,16 +618,16 @@ const SuperuserEventsDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
+    <div className="space-y-6 w-full">
+      <div className="flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-6 w-full">
+        <div className="flex-shrink-0">
           <h1 className="text-2xl font-bold text-gray-900">Superuser Events Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">View and manage all events across the platform</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-4 2xl:justify-end flex-1 min-w-0">
           {/* [2025-12-05] - Search bar with button */}
-          <div className="relative flex items-center gap-2">
-            <div className="relative">
+          <div className="relative flex items-center gap-2 flex-grow max-w-md">
+            <div className="relative flex-grow">
               <input
                 type="text"
                 placeholder="Search events..."
@@ -638,7 +638,7 @@ const SuperuserEventsDashboard: React.FC = () => {
                     loadEvents();
                   }
                 }}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full"
               />
               <svg
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -732,12 +732,23 @@ const SuperuserEventsDashboard: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            
+            <button
+              onClick={loadEvents}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+              title="Refresh events"
+            >
+              <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {loading ? '...' : 'Refresh'}
+            </button>
+
             {showCreateDropdown && (
               <>
                 {/* Click outside to close */}
-                <div 
-                  className="fixed inset-0 z-40" 
+                <div
+                  className="fixed inset-0 z-40"
                   onClick={() => setShowCreateDropdown(false)}
                 />
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200">
@@ -784,16 +795,15 @@ const SuperuserEventsDashboard: React.FC = () => {
               </>
             )}
           </div>
-          
+
           {/* [2025-11-30] - View selector buttons */}
           <div className="flex items-center gap-1 border border-gray-300 rounded-md overflow-hidden">
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-2 text-sm font-medium transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+              className={`px-3 py-2 text-sm font-medium transition-colors ${viewMode === 'list'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
               title="List View"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -802,11 +812,10 @@ const SuperuserEventsDashboard: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('card')}
-              className={`px-3 py-2 text-sm font-medium transition-colors ${
-                viewMode === 'card'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+              className={`px-3 py-2 text-sm font-medium transition-colors ${viewMode === 'card'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
               title="Card View"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -814,13 +823,6 @@ const SuperuserEventsDashboard: React.FC = () => {
               </svg>
             </button>
           </div>
-          <button
-            onClick={loadEvents}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Loading...' : 'Refresh'}
-          </button>
         </div>
       </div>
 
@@ -915,7 +917,7 @@ const SuperuserEventsDashboard: React.FC = () => {
                             title="Select all events"
                           />
                         </th>
-                        <th 
+                        <th
                           className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
                           onClick={() => handleSort('title')}
                         >
@@ -924,333 +926,338 @@ const SuperuserEventsDashboard: React.FC = () => {
                             {getSortIcon('title')}
                           </div>
                         </th>
-                      <th 
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
-                        onClick={() => handleSort('start_time')}
-                      >
-                        <div className="flex items-center">
-                          Date & Time
-                          {getSortIcon('start_time')}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
-                        onClick={() => handleSort('event_type')}
-                      >
-                        <div className="flex items-center">
-                          Category
-                          {getSortIcon('event_type')}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
-                        onClick={() => handleSort('status')}
-                      >
-                        <div className="flex items-center">
-                          Status
-                          {getSortIcon('status')}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
-                        onClick={() => handleSort('location')}
-                      >
-                        <div className="flex items-center">
-                          Location
-                          {getSortIcon('location')}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
-                        onClick={() => handleSort('organizer')}
-                      >
-                        <div className="flex items-center">
-                          Organizer
-                          {getSortIcon('organizer')}
-                        </div>
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-                      <th 
-                        className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
-                        onClick={() => handleSort('created_at')}
-                      >
-                        <div className="flex items-center">
-                          Created
-                          {getSortIcon('created_at')}
-                        </div>
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredEvents.length === 0 ? (
-                      <tr>
-                        <td colSpan={10} className="px-6 py-8 text-center text-gray-500">
-                          {searchQuery.trim() ? `No events found matching "${searchQuery}"` : 'No events found'}
-                        </td>
+                        <th
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
+                          onClick={() => handleSort('start_time')}
+                        >
+                          <div className="flex items-center">
+                            Date & Time
+                            {getSortIcon('start_time')}
+                          </div>
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
+                          onClick={() => handleSort('event_type')}
+                        >
+                          <div className="flex items-center">
+                            Category
+                            {getSortIcon('event_type')}
+                          </div>
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
+                          onClick={() => handleSort('status')}
+                        >
+                          <div className="flex items-center">
+                            Status
+                            {getSortIcon('status')}
+                          </div>
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
+                          onClick={() => handleSort('location')}
+                        >
+                          <div className="flex items-center">
+                            Location
+                            {getSortIcon('location')}
+                          </div>
+                        </th>
+                        <th
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
+                          onClick={() => handleSort('organizer')}
+                        >
+                          <div className="flex items-center">
+                            Organizer
+                            {getSortIcon('organizer')}
+                          </div>
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                        <th
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
+                          onClick={() => handleSort('created_at')}
+                        >
+                          <div className="flex items-center">
+                            Created
+                            {getSortIcon('created_at')}
+                          </div>
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
-                    ) : (
-                      filteredEvents.map((event) => (
-                        <tr key={event.id} className={`hover:bg-gray-50 ${selectedEvents.has(event.id) ? 'bg-blue-50' : ''}`}>
-                          {/* [2025-12-05] - Select checkbox */}
-                          <td className="px-4 py-4">
-                            <input
-                              type="checkbox"
-                              checked={selectedEvents.has(event.id)}
-                              onChange={() => handleSelectEvent(event.id)}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredEvents.length === 0 ? (
+                        <tr>
+                          <td colSpan={10} className="px-6 py-8 text-center text-gray-500">
+                            {searchQuery.trim() ? `No events found matching "${searchQuery}"` : 'No events found'}
                           </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium text-gray-900">{event.title}</div>
+                        </tr>
+                      ) : (
+                        filteredEvents.map((event) => (
+                          <tr key={event.id} className={`hover:bg-gray-50 ${selectedEvents.has(event.id) ? 'bg-blue-50' : ''}`}>
+                            {/* [2025-12-05] - Select checkbox */}
+                            <td className="px-4 py-4">
+                              <input
+                                type="checkbox"
+                                checked={selectedEvents.has(event.id)}
+                                onChange={() => handleSelectEvent(event.id)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-2">
+                                <div className="text-sm font-medium text-gray-900">{event.title}</div>
+                                {event.is_recurring && (
+                                  <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 rounded-full" title="Recurring event">
+                                    🔁
+                                  </span>
+                                )}
+                              </div>
+                              {event.subtitle && (
+                                <div className="text-xs text-gray-500 mt-1">{event.subtitle}</div>
+                              )}
+                              {event.is_recurring && event.recurrence_rule && (
+                                <div className="text-xs text-purple-600 mt-1">
+                                  {event.recurrence_rule.frequency === 'daily' && `Every ${event.recurrence_rule.interval} day(s)`}
+                                  {event.recurrence_rule.frequency === 'weekly' && `Every ${event.recurrence_rule.interval} week(s)`}
+                                  {event.recurrence_rule.frequency === 'monthly' && `Every ${event.recurrence_rule.interval} month(s)`}
+                                  {event.recurrence_rule.frequency === 'yearly' && `Every ${event.recurrence_rule.interval} year(s)`}
+                                </div>
+                              )}
+                              {event.business_id && (
+                                <div className="text-xs text-gray-400 mt-1">Business: {event.business_id.substring(0, 8)}...</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{formatDate(event.start_time)}</div>
+                              <div className="text-xs text-gray-500">to {formatDate(event.end_time)}</div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                {event.event_type_names || event.event_type || 'general'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(event.status)}`}>
+                                {event.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-500">
+                              {event.venue_area || event.location || '—'}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-500">
+                              {event.metadata?.organizer_name || '—'}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-500 max-w-xs">
+                              <div className="truncate" title={event.metadata?.organizer_address || event.location || event.venue_area || ''}>
+                                {event.metadata?.organizer_address || event.location || event.venue_area || '—'}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(event.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                              <button
+                                onClick={() => handleViewClick(event)}
+                                className="text-blue-600 hover:text-blue-900 mr-3"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => handleEditClick(event)}
+                                className="text-indigo-600 hover:text-indigo-900 mr-3"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDuplicateEvent(event.id)}
+                                disabled={loading}
+                                className="text-green-600 hover:text-green-900"
+                                title="Duplicate this event"
+                              >
+                                Duplicate
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              /* Card View (EventOn-style) */
+              <div className="space-y-4">
+                {filteredEvents.length === 0 ? (
+                  <div className="bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
+                    {searchQuery.trim() ? `No events found matching "${searchQuery}"` : 'No events found'}
+                  </div>
+                ) : (
+                  filteredEvents.map((event) => {
+                    const startDate = formatCardDate(event.start_time);
+                    const endDate = formatCardDate(event.end_time);
+                    const categoryColor = getCategoryColor(event.event_type);
+                    const isSameDay = startDate.day === endDate.day && startDate.month === endDate.month;
+                    const isSelected = selectedEvents.has(event.id);
+
+                    return (
+                      <div
+                        key={event.id}
+                        className={`${categoryColor} rounded-lg p-6 text-white shadow-lg hover:shadow-xl transition-shadow ${isSelected ? 'ring-4 ring-blue-400' : ''} relative`}
+                      >
+                        {/* [2025-12-05] - Select checkbox for card view */}
+                        <div className="absolute top-4 right-4">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleSelectEvent(event.id)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-5 h-5"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <div className="flex items-start gap-4">
+                          {/* Date Indicator */}
+                          <div className="flex-shrink-0">
+                            <div className="text-center">
+                              <div className="text-3xl font-bold">{startDate.day}</div>
+                              <div className="text-xs font-medium opacity-90">{startDate.month}</div>
+                              {!isSameDay && (
+                                <>
+                                  <div className="text-lg font-bold mt-2">{endDate.day}</div>
+                                  <div className="text-xs font-medium opacity-90">{endDate.month}</div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Event Content */}
+                          <div className="flex-1 min-w-0">
+                            {/* Status Badge */}
+                            <div className="mb-2">
+                              <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${event.status === 'published' ? 'bg-green-500' :
+                                event.status === 'draft' ? 'bg-gray-400' :
+                                  event.status === 'scraped_draft' ? 'bg-yellow-500' :
+                                    'bg-red-400'
+                                }`}>
+                                {event.status.toUpperCase()}
+                              </span>
+                            </div>
+
+                            {/* Title */}
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-xl font-bold leading-tight">{event.title}</h3>
                               {event.is_recurring && (
-                                <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 rounded-full" title="Recurring event">
-                                  🔁
+                                <span className="px-2 py-1 text-xs font-medium bg-white bg-opacity-30 text-white rounded-full" title="Recurring event">
+                                  🔁 Recurring
                                 </span>
                               )}
                             </div>
+
                             {event.subtitle && (
-                              <div className="text-xs text-gray-500 mt-1">{event.subtitle}</div>
-                            )}
-                            {event.is_recurring && event.recurrence_rule && (
-                              <div className="text-xs text-purple-600 mt-1">
-                                {event.recurrence_rule.frequency === 'daily' && `Every ${event.recurrence_rule.interval} day(s)`}
-                                {event.recurrence_rule.frequency === 'weekly' && `Every ${event.recurrence_rule.interval} week(s)`}
-                                {event.recurrence_rule.frequency === 'monthly' && `Every ${event.recurrence_rule.interval} month(s)`}
-                                {event.recurrence_rule.frequency === 'yearly' && `Every ${event.recurrence_rule.interval} year(s)`}
+                              <div className="text-sm italic opacity-90 mb-3 uppercase tracking-wider">
+                                {event.subtitle}
                               </div>
                             )}
-                            {event.business_id && (
-                              <div className="text-xs text-gray-400 mt-1">Business: {event.business_id.substring(0, 8)}...</div>
+                            {event.is_recurring && event.recurrence_rule && (
+                              <div className="mb-2 text-sm opacity-90">
+                                {event.recurrence_rule.frequency === 'daily' && `Repeats every ${event.recurrence_rule.interval} day(s)`}
+                                {event.recurrence_rule.frequency === 'weekly' && `Repeats every ${event.recurrence_rule.interval} week(s)`}
+                                {event.recurrence_rule.frequency === 'monthly' && `Repeats every ${event.recurrence_rule.interval} month(s)`}
+                                {event.recurrence_rule.frequency === 'yearly' && `Repeats every ${event.recurrence_rule.interval} year(s)`}
+                              </div>
                             )}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{formatDate(event.start_time)}</div>
-                            <div className="text-xs text-gray-500">to {formatDate(event.end_time)}</div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                              {event.event_type_names || event.event_type || 'general'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(event.status)}`}>
-                              {event.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4 text-sm text-gray-500">
-                            {event.venue_area || event.location || '—'}
-                          </td>
-                          <td className="px-4 py-4 text-sm text-gray-500">
-                            {event.metadata?.organizer_name || '—'}
-                          </td>
-                          <td className="px-4 py-4 text-sm text-gray-500 max-w-xs">
-                            <div className="truncate" title={event.metadata?.organizer_address || event.location || event.venue_area || ''}>
-                              {event.metadata?.organizer_address || event.location || event.venue_area || '—'}
+
+                            {/* Date & Time */}
+                            <div className="mb-2 text-sm opacity-90">
+                              <span className="font-medium">{startDate.full}</span>
+                              {!isSameDay && (
+                                <> to <span className="font-medium">{endDate.full}</span></>
+                              )}
                             </div>
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(event.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
-                              onClick={() => handleViewClick(event)}
-                              className="text-blue-600 hover:text-blue-900 mr-3"
-                            >
-                              View
-                            </button>
-                            <button
-                              onClick={() => handleEditClick(event)}
-                              className="text-indigo-600 hover:text-indigo-900 mr-3"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDuplicateEvent(event.id)}
-                              disabled={loading}
-                              className="text-green-600 hover:text-green-900"
-                              title="Duplicate this event"
-                            >
-                              Duplicate
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            /* Card View (EventOn-style) */
-            <div className="space-y-4">
-              {filteredEvents.length === 0 ? (
-                <div className="bg-white border border-gray-200 rounded-lg p-8 text-center text-gray-500">
-                  {searchQuery.trim() ? `No events found matching "${searchQuery}"` : 'No events found'}
-                </div>
-              ) : (
-                filteredEvents.map((event) => {
-                  const startDate = formatCardDate(event.start_time);
-                  const endDate = formatCardDate(event.end_time);
-                  const categoryColor = getCategoryColor(event.event_type);
-                  const isSameDay = startDate.day === endDate.day && startDate.month === endDate.month;
-                  const isSelected = selectedEvents.has(event.id);
-                  
-                  return (
-                    <div
-                      key={event.id}
-                      className={`${categoryColor} rounded-lg p-6 text-white shadow-lg hover:shadow-xl transition-shadow ${isSelected ? 'ring-4 ring-blue-400' : ''} relative`}
-                    >
-                      {/* [2025-12-05] - Select checkbox for card view */}
-                      <div className="absolute top-4 right-4">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleSelectEvent(event.id)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-5 h-5"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
-                      <div className="flex items-start gap-4">
-                        {/* Date Indicator */}
-                        <div className="flex-shrink-0">
-                          <div className="text-center">
-                            <div className="text-3xl font-bold">{startDate.day}</div>
-                            <div className="text-xs font-medium opacity-90">{startDate.month}</div>
-                            {!isSameDay && (
-                              <>
-                                <div className="text-lg font-bold mt-2">{endDate.day}</div>
-                                <div className="text-xs font-medium opacity-90">{endDate.month}</div>
-                              </>
+                            <div className="mb-2 text-sm opacity-90">
+                              {new Date(event.start_time).toLocaleTimeString(undefined, {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                              })}
+                              {' - '}
+                              {new Date(event.end_time).toLocaleTimeString(undefined, {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                              })}
+                            </div>
+
+                            {/* Location */}
+                            {(event.venue_area || event.location) && (
+                              <div className="mb-2 text-sm opacity-90">
+                                📍 {event.venue_area || event.location}
+                              </div>
                             )}
-                          </div>
-                        </div>
 
-                        {/* Event Content */}
-                        <div className="flex-1 min-w-0">
-                          {/* Status Badge */}
-                          <div className="mb-2">
-                            <span className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
-                              event.status === 'published' ? 'bg-green-500' :
-                              event.status === 'draft' ? 'bg-gray-400' :
-                              event.status === 'scraped_draft' ? 'bg-yellow-500' :
-                              'bg-red-400'
-                            }`}>
-                              {event.status.toUpperCase()}
-                            </span>
-                          </div>
-
-                          {/* Title */}
-                          <div className="flex items-center gap-2 mb-3">
-                            <h3 className="text-xl font-bold leading-tight">{event.title}</h3>
-                            {event.is_recurring && (
-                              <span className="px-2 py-1 text-xs font-medium bg-white bg-opacity-30 text-white rounded-full" title="Recurring event">
-                                🔁 Recurring
+                            {/* Category */}
+                            <div className="mb-3">
+                              <span className="inline-block px-3 py-1 bg-white bg-opacity-20 text-white text-xs font-semibold rounded-full">
+                                {event.event_type_names || event.event_type || 'General'}
                               </span>
-                            )}
-                          </div>
-                          {event.is_recurring && event.recurrence_rule && (
-                            <div className="mb-2 text-sm opacity-90">
-                              {event.recurrence_rule.frequency === 'daily' && `Repeats every ${event.recurrence_rule.interval} day(s)`}
-                              {event.recurrence_rule.frequency === 'weekly' && `Repeats every ${event.recurrence_rule.interval} week(s)`}
-                              {event.recurrence_rule.frequency === 'monthly' && `Repeats every ${event.recurrence_rule.interval} month(s)`}
-                              {event.recurrence_rule.frequency === 'yearly' && `Repeats every ${event.recurrence_rule.interval} year(s)`}
                             </div>
-                          )}
 
-                          {/* Date & Time */}
-                          <div className="mb-2 text-sm opacity-90">
-                            <span className="font-medium">{startDate.full}</span>
-                            {!isSameDay && (
-                              <> to <span className="font-medium">{endDate.full}</span></>
-                            )}
-                          </div>
-                          <div className="mb-2 text-sm opacity-90">
-                            {new Date(event.start_time).toLocaleTimeString(undefined, {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              hour12: true
-                            })}
-                            {' - '}
-                            {new Date(event.end_time).toLocaleTimeString(undefined, {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              hour12: true
-                            })}
-                          </div>
-
-                          {/* Location */}
-                          {(event.venue_area || event.location) && (
-                            <div className="mb-2 text-sm opacity-90">
-                              📍 {event.venue_area || event.location}
+                            {/* Actions */}
+                            <div className="flex gap-3 mt-4">
+                              <button
+                                onClick={() => handleViewClick(event)}
+                                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm font-medium rounded-md transition-colors"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => handleEditClick(event)}
+                                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm font-medium rounded-md transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDuplicateEvent(event.id)}
+                                disabled={loading}
+                                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50"
+                                title="Duplicate this event"
+                              >
+                                Duplicate
+                              </button>
                             </div>
-                          )}
-
-                          {/* Category */}
-                          <div className="mb-3">
-                            <span className="inline-block px-3 py-1 bg-white bg-opacity-20 text-white text-xs font-semibold rounded-full">
-                              {event.event_type_names || event.event_type || 'General'}
-                            </span>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex gap-3 mt-4">
-                            <button
-                              onClick={() => handleViewClick(event)}
-                              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm font-medium rounded-md transition-colors"
-                            >
-                              View
-                            </button>
-                            <button
-                              onClick={() => handleEditClick(event)}
-                              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm font-medium rounded-md transition-colors"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDuplicateEvent(event.id)}
-                              disabled={loading}
-                              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50"
-                              title="Duplicate this event"
-                            >
-                              Duplicate
-                            </button>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          )}
+                    );
+                  })
+                )}
+              </div>
+            )}
 
-          {/* Pagination */}
-          {pagination.total > 0 && !searchQuery.trim() && (
-            <div className="bg-white border border-gray-200 rounded-lg px-6 py-3 flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing {pagination.offset + 1} to {Math.min(pagination.offset + pagination.limit, pagination.total)} of {pagination.total} events
+            {/* Pagination */}
+            {pagination.total > 0 && !searchQuery.trim() && (
+              <div className="bg-white border border-gray-200 rounded-lg px-6 py-3 flex items-center justify-between">
+                <div className="text-sm text-gray-700">
+                  Showing {pagination.offset + 1} to {Math.min(pagination.offset + pagination.limit, pagination.total)} of {pagination.total} events
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handlePageChange(Math.max(0, pagination.offset - pagination.limit))}
+                    disabled={pagination.offset === 0}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(pagination.offset + pagination.limit)}
+                    disabled={!pagination.hasMore}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handlePageChange(Math.max(0, pagination.offset - pagination.limit))}
-                  disabled={pagination.offset === 0}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => handlePageChange(pagination.offset + pagination.limit)}
-                  disabled={!pagination.hasMore}
-                  className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-        </>
+            )}
+          </>
         );
       })()}
 

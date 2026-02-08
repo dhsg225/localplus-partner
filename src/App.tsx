@@ -18,6 +18,7 @@ import ActivitiesDashboard from './pages/ActivitiesDashboard'; // [2025-12-02] -
 import AttractionsDashboard from './pages/AttractionsDashboard'; // [2025-12-02] - Attractions management
 import DMODashboard from './pages/DMODashboard'; // [2025-12-02] - DMO Dashboard
 import Navigation from './components/Navigation';
+import PartnerLanding from './pages/PartnerLanding';
 
 interface User {
   id: string;
@@ -30,6 +31,7 @@ interface User {
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,7 +44,7 @@ function App() {
         console.log('👤 Session result:', user ? 'User found' : 'No user');
         if (user) {
           setUser(user);
-          
+
           // Set Supabase session for RLS policies
           const token = localStorage.getItem('auth_token');
           if (token) {
@@ -112,20 +114,33 @@ function App() {
   }
 
   if (!user) {
-    return <LoginForm onLogin={(user) => setUser(user)} />;
+    if (showLogin) {
+      return (
+        <div className="relative min-h-screen bg-gray-50 flex flex-col justify-center">
+          <button
+            onClick={() => setShowLogin(false)}
+            className="absolute top-6 left-6 text-slate-500 hover:text-slate-800 flex items-center gap-2 font-medium z-10"
+          >
+            ← Back to Home
+          </button>
+          <LoginForm onLogin={(user) => setUser(user)} />
+        </div>
+      );
+    }
+    return <PartnerLanding onLoginClick={() => setShowLogin(true)} />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation 
+    <div className="min-h-screen w-full bg-gray-50 overflow-x-hidden">
+      <Navigation
         currentPage={getCurrentPage()}
         onPageChange={handlePageChange}
         user={user}
         onLogout={handleLogout}
         showAdminLink={true}
       />
-      
-      <main className="p-6">
+
+      <main className="w-full p-6">
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
