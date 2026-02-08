@@ -920,7 +920,7 @@ const SuperuserEventsDashboard: React.FC = () => {
                           />
                         </th>
                         <th
-                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors min-w-[400px]"
                           onClick={() => handleSort('title')}
                         >
                           <div className="flex items-center">
@@ -1057,27 +1057,29 @@ const SuperuserEventsDashboard: React.FC = () => {
                             <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(event.created_at).toLocaleDateString()}
                             </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                              <button
-                                onClick={() => handleViewClick(event)}
-                                className="text-blue-600 hover:text-blue-900 mr-3"
-                              >
-                                View
-                              </button>
-                              <button
-                                onClick={() => handleEditClick(event)}
-                                className="text-indigo-600 hover:text-indigo-900 mr-3"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDuplicateEvent(event.id)}
-                                disabled={loading}
-                                className="text-green-600 hover:text-green-900"
-                                title="Duplicate this event"
-                              >
-                                Duplicate
-                              </button>
+                            <td className="px-4 py-4 text-xs font-medium">
+                              <div className="flex flex-col items-start gap-1.5">
+                                <button
+                                  onClick={() => handleViewClick(event)}
+                                  className="text-blue-600 hover:text-blue-900"
+                                >
+                                  View
+                                </button>
+                                <button
+                                  onClick={() => handleEditClick(event)}
+                                  className="text-indigo-600 hover:text-indigo-900"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDuplicateEvent(event.id)}
+                                  disabled={loading}
+                                  className="text-green-600 hover:text-green-900"
+                                  title="Duplicate this event"
+                                >
+                                  Duplicate
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))
