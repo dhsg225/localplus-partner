@@ -973,7 +973,7 @@ const SuperuserEventsDashboard: React.FC = () => {
                             {getSortIcon('organizer')}
                           </div>
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider max-w-[150px]">Address</th>
                         <th
                           className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group transition-colors"
                           onClick={() => handleSort('created_at')}
@@ -1032,6 +1032,14 @@ const SuperuserEventsDashboard: React.FC = () => {
                             <td className="px-4 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900">{formatDate(event.start_time)}</div>
                               <div className="text-xs text-gray-500">to {formatDate(event.end_time)}</div>
+                              {event.is_recurring && (
+                                <div className="mt-1 flex items-center gap-1 text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded w-fit">
+                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                  <span>Repeats</span>
+                                </div>
+                              )}
                             </td>
                             <td className="px-4 py-4">
                               <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
@@ -1049,7 +1057,7 @@ const SuperuserEventsDashboard: React.FC = () => {
                             <td className="px-4 py-4 text-sm text-gray-500">
                               {event.metadata?.organizer_name || '—'}
                             </td>
-                            <td className="px-4 py-4 text-sm text-gray-500 max-w-xs">
+                            <td className="px-4 py-4 text-sm text-gray-500 max-w-[150px]">
                               <div className="truncate" title={event.metadata?.organizer_address || event.location || event.venue_area || ''}>
                                 {event.metadata?.organizer_address || event.location || event.venue_area || '—'}
                               </div>
