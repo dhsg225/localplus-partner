@@ -315,6 +315,7 @@ class ApiService {
     longitude?: number;
     map_url?: string;
     image_url?: string;
+    facebook_url?: string;
   }) {
     return this.request('/api/locations', {
       method: 'POST',
@@ -337,6 +338,7 @@ class ApiService {
     longitude?: number;
     map_url?: string;
     image_url?: string;
+    facebook_url?: string;
     venue_type?: string;
     capacity?: number;
   }) {
@@ -489,6 +491,44 @@ class ApiService {
 
   async deleteMedia(mediaId: string) {
     return this.request(`/api/media/${mediaId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // [2026-01-21] - Event Attendance endpoints
+  async getEventAttendance(eventId: string) {
+    return this.request(`/api/events/${eventId}/attendance`, {
+      method: 'GET',
+    });
+  }
+
+  async submitRSVP(eventId: string, attendanceData: {
+    guest_name: string;
+    guest_email: string;
+    seats_reserved?: number;
+    payment_proof_url?: string;
+    custom_responses?: Record<string, any>;
+    metadata?: any;
+  }) {
+    return this.request(`/api/events/${eventId}/attendance`, {
+      method: 'POST',
+      body: JSON.stringify(attendanceData),
+    });
+  }
+
+  async updateAttendanceStatus(eventId: string, attendanceId: string, updates: {
+    status?: string;
+    payment_status?: string;
+    payment_proof_url?: string;
+  }) {
+    return this.request(`/api/events/${eventId}/attendance`, {
+      method: 'PUT',
+      body: JSON.stringify({ attendanceId, ...updates }),
+    });
+  }
+
+  async cancelAttendance(eventId: string, attendanceId: string) {
+    return this.request(`/api/events/${eventId}/attendance?attendanceId=${attendanceId}`, {
       method: 'DELETE',
     });
   }

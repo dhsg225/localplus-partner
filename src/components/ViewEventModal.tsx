@@ -1,5 +1,6 @@
 // [2025-11-30] - Single event view modal (EventOn-style)
-import React from 'react';
+import React, { useState } from 'react';
+import AttendanceDashboard from './AttendanceDashboard';
 
 interface EventRecord {
   id: string;
@@ -32,6 +33,21 @@ interface EventRecord {
     organizer_image?: string;
     [key: string]: any;
   };
+  enabled_features?: {
+    rsvp?: boolean;
+    ticketing?: boolean;
+  };
+  rsvp_config?: {
+    max_capacity?: number | null;
+    rsvp_deadline?: string | null;
+    requires_confirmation?: boolean;
+    allow_guest_plus_one?: boolean;
+  };
+  ticketing_config?: {
+    price_per_ticket?: number | null;
+    currency?: string;
+    payment_methods?: string[];
+  };
 }
 
 interface ViewEventModalProps {
@@ -47,6 +63,8 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
   onClose,
   onEdit
 }) => {
+  const [showDashboard, setShowDashboard] = useState(false);
+
   if (!visible || !event) return null;
 
   // Format date and time
@@ -446,9 +464,9 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Status:</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.status === 'published' ? 'bg-green-100 text-green-800' :
-                            event.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                              event.status === 'scraped_draft' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
+                          event.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                            event.status === 'scraped_draft' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
                           }`}>
                           {event.status}
                         </span>
@@ -479,6 +497,14 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
               >
                 Close
               </button>
+              {(event.enabled_features?.rsvp || event.enabled_features?.ticketing) && (
+                <button
+                  onClick={() => setShowDashboard(true)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+                >
+                  Manage Attendance
+                </button>
+              )}
               {onEdit && (
                 <button
                   onClick={onEdit}
@@ -491,6 +517,16 @@ const ViewEventModal: React.FC<ViewEventModalProps> = ({
           </div>
         </div>
       </div>
+
+      {showDashboard && (
+        <AttendanceDashboard
+          eventId={event.id}
+          eventTitle={event.title}
+          maxCapacity={event.rsvp_config?.max_capacity || undefined}
+          requiresPayment={event.enabled_features?.ticketing}
+          onClose={() => setShowDashboard(false)}
+        />
+      )}
     </div>
   );
 };

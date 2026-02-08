@@ -5,7 +5,7 @@ import { apiService } from '../services/apiService';
 interface CreateLocationModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (locationData: any) => void;
 }
 
 const CreateLocationModal: React.FC<CreateLocationModalProps> = ({
@@ -20,7 +20,8 @@ const CreateLocationModal: React.FC<CreateLocationModalProps> = ({
     latitude: '',
     longitude: '',
     map_url: '',
-    image_url: ''
+    image_url: '',
+    facebook_url: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,11 +45,12 @@ const CreateLocationModal: React.FC<CreateLocationModalProps> = ({
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         map_url: formData.map_url || null,
-        image_url: formData.image_url || null
+        image_url: formData.image_url || null,
+        facebook_url: formData.facebook_url || null
       };
 
       await apiService.createLocation(locationData);
-      
+
       // Reset form
       setFormData({
         name: '',
@@ -57,12 +59,13 @@ const CreateLocationModal: React.FC<CreateLocationModalProps> = ({
         latitude: '',
         longitude: '',
         map_url: '',
-        image_url: ''
+        image_url: '',
+        facebook_url: ''
       });
 
       onClose();
       if (onSuccess) {
-        onSuccess();
+        onSuccess(locationData);
       }
     } catch (err: any) {
       console.error('[CreateLocationModal] Error creating location:', err);
@@ -209,6 +212,20 @@ const CreateLocationModal: React.FC<CreateLocationModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="https://..."
+                  />
+                </div>
+
+                {/* Facebook URL */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Facebook URL
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.facebook_url}
+                    onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="https://facebook.com/..."
                   />
                 </div>
               </div>

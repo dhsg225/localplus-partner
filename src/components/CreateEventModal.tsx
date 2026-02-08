@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/apiService';
 import MediaPicker from './MediaPicker';
+import CreateLocationModal from './CreateLocationModal';
+import CustomFormBuilder from './CustomFormBuilder';
 
 interface CreateEventModalProps {
   visible: boolean;
@@ -26,9 +28,30 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     venue_area: '',
     start_time: '',
     end_time: '',
-    hero_image_url: ''
+    hero_image_url: '',
+    // [2026-01-21] - Modular feature system
+    enabled_features: {
+      rsvp: false,
+      ticketing: false
+    },
+    rsvp_config: {
+      max_capacity: '' as number | '',
+      rsvp_deadline: '',
+      requires_confirmation: true,
+      allow_guest_plus_one: false,
+      custom_fields: [] as any[]
+    },
+    ticketing_config: {
+      price_per_ticket: '' as number | '',
+      currency: 'THB',
+      payment_methods: ['bank_transfer'] as string[],
+      ticket_types: [] as any[],
+      sales_start: '',
+      sales_end: ''
+    }
   });
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [showCreateLocationModal, setShowCreateLocationModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -211,17 +234,41 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         // [2025-01-XX] - Keep category IDs as-is (multi-select component handles display)
         let eventType = initialData.event_type || 'general';
 
+        // Parse enabled features from initialData
+        const enabledFeatures = initialData.enabled_features || {};
+        const rsvpConfig = initialData.rsvp_config || {};
+        const ticketingConfig = initialData.ticketing_config || {};
+
         setFormData({
           title: `${initialData.title} (Copy)`,
           description: initialData.description || '',
           subtitle: initialData.subtitle || '',
-          status: 'draft', // Always set to draft for duplicates
+          status: 'draft',
           event_type: eventType,
           location: initialData.location || '',
           venue_area: initialData.venue_area || '',
           start_time: initialData.start_time ? formatDateTimeLocal(initialData.start_time) : '',
           end_time: initialData.end_time ? formatDateTimeLocal(initialData.end_time) : '',
-          hero_image_url: initialData.hero_image_url || ''
+          hero_image_url: initialData.hero_image_url || '',
+          enabled_features: {
+            rsvp: enabledFeatures.rsvp || false,
+            ticketing: enabledFeatures.ticketing || false
+          },
+          rsvp_config: {
+            max_capacity: rsvpConfig.max_capacity || '',
+            rsvp_deadline: rsvpConfig.rsvp_deadline ? formatDateTimeLocal(rsvpConfig.rsvp_deadline) : '',
+            requires_confirmation: rsvpConfig.requires_confirmation !== false,
+            allow_guest_plus_one: rsvpConfig.allow_guest_plus_one || false,
+            custom_fields: rsvpConfig.custom_fields || []
+          },
+          ticketing_config: {
+            price_per_ticket: ticketingConfig.price_per_ticket || '',
+            currency: ticketingConfig.currency || 'THB',
+            payment_methods: ticketingConfig.payment_methods || ['bank_transfer'],
+            ticket_types: ticketingConfig.ticket_types || [],
+            sales_start: ticketingConfig.sales_start ? formatDateTimeLocal(ticketingConfig.sales_start) : '',
+            sales_end: ticketingConfig.sales_end ? formatDateTimeLocal(ticketingConfig.sales_end) : ''
+          }
         });
 
         // Set organizer if present
@@ -363,7 +410,24 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         calendar_slug: selectedCalendarSlug || calendarSearch || null,
         // [2025-01-XX] - Include organizer
         organizer_id: selectedOrganizerId || null,
-        hero_image_url: formData.hero_image_url || null
+        hero_image_url: formData.hero_image_url || null,
+        // [2026-01-21] - Modular Feature System
+        enabled_features: formData.enabled_features,
+        rsvp_config: formData.enabled_features.rsvp ? {
+          max_capacity: formData.rsvp_config.max_capacity ? parseInt(String(formData.rsvp_config.max_capacity)) : null,
+          rsvp_deadline: formData.rsvp_config.rsvp_deadline ? new Date(formData.rsvp_config.rsvp_deadline).toISOString() : null,
+          requires_confirmation: formData.rsvp_config.requires_confirmation,
+          allow_guest_plus_one: formData.rsvp_config.allow_guest_plus_one,
+          custom_fields: formData.rsvp_config.custom_fields
+        } : {},
+        ticketing_config: formData.enabled_features.ticketing ? {
+          price_per_ticket: formData.ticketing_config.price_per_ticket ? parseFloat(String(formData.ticketing_config.price_per_ticket)) : null,
+          currency: formData.ticketing_config.currency,
+          payment_methods: formData.ticketing_config.payment_methods,
+          ticket_types: formData.ticketing_config.ticket_types,
+          sales_start: formData.ticketing_config.sales_start ? new Date(formData.ticketing_config.sales_start).toISOString() : null,
+          sales_end: formData.ticketing_config.sales_end ? new Date(formData.ticketing_config.sales_end).toISOString() : null
+        } : {}
       };
 
       // [2025-12-05] - Add recurrence_rules if event is recurring
@@ -417,7 +481,26 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         venue_area: '',
         start_time: '',
         end_time: '',
-        hero_image_url: ''
+        hero_image_url: '',
+        enabled_features: {
+          rsvp: false,
+          ticketing: false
+        },
+        rsvp_config: {
+          max_capacity: '' as number | '',
+          rsvp_deadline: '',
+          requires_confirmation: true,
+          allow_guest_plus_one: false,
+          custom_fields: [] as any[]
+        },
+        ticketing_config: {
+          price_per_ticket: '' as number | '',
+          currency: 'THB',
+          payment_methods: ['bank_transfer'] as string[],
+          ticket_types: [] as any[],
+          sales_start: '',
+          sales_end: ''
+        }
       });
 
       // [2025-12-05] - Reset recurrence
@@ -474,7 +557,26 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         venue_area: '',
         start_time: '',
         end_time: '',
-        hero_image_url: ''
+        hero_image_url: '',
+        enabled_features: {
+          rsvp: false,
+          ticketing: false
+        },
+        rsvp_config: {
+          max_capacity: '' as number | '',
+          rsvp_deadline: '',
+          requires_confirmation: true,
+          allow_guest_plus_one: false,
+          custom_fields: [] as any[]
+        },
+        ticketing_config: {
+          price_per_ticket: '' as number | '',
+          currency: 'THB',
+          payment_methods: ['bank_transfer'] as string[],
+          ticket_types: [] as any[],
+          sales_start: '',
+          sales_end: ''
+        }
       });
       setIsRecurring(false);
       setRecurrenceData({
@@ -799,6 +901,243 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   )}
                 </div>
 
+                {/* [2026-01-21] - Modular Feature System */}
+                <div className="border-t border-gray-100 pt-6 mt-6">
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">📋 Event Features</h4>
+                  <p className="text-xs text-gray-500 mb-4">Enable additional features for your event</p>
+
+                  {/* RSVP Feature Toggle */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <input
+                        id="enable_rsvp"
+                        type="checkbox"
+                        checked={formData.enabled_features.rsvp}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          enabled_features: { ...formData.enabled_features, rsvp: e.target.checked }
+                        })}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="enable_rsvp" className="flex-1 text-sm font-medium text-gray-900 cursor-pointer">
+                        Enable RSVP & Attendance Tracking
+                      </label>
+                    </div>
+
+                    {/* RSVP Settings Panel (Collapsible) */}
+                    {formData.enabled_features.rsvp && (
+                      <div className="mt-3 ml-7 p-4 bg-blue-50 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <h5 className="text-sm font-semibold text-gray-900 mb-3">RSVP Settings</h5>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Max Capacity */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Max Capacity
+                            </label>
+                            <input
+                              type="number"
+                              value={formData.rsvp_config.max_capacity}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                rsvp_config: { ...formData.rsvp_config, max_capacity: e.target.value ? parseInt(e.target.value) : '' }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                              placeholder="e.g. 20"
+                            />
+                          </div>
+
+                          {/* RSVP Deadline */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              RSVP Deadline
+                            </label>
+                            <input
+                              type="datetime-local"
+                              value={formData.rsvp_config.rsvp_deadline}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                rsvp_config: { ...formData.rsvp_config, rsvp_deadline: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-3 space-y-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.rsvp_config.requires_confirmation}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                rsvp_config: { ...formData.rsvp_config, requires_confirmation: e.target.checked }
+                              })}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">Require host confirmation</span>
+                          </label>
+
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.rsvp_config.allow_guest_plus_one}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                rsvp_config: { ...formData.rsvp_config, allow_guest_plus_one: e.target.checked }
+                              })}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-700">Allow +1 guests</span>
+                          </label>
+                        </div>
+
+                        {/* [2026-01-21] - Custom Form Builder */}
+                        <CustomFormBuilder
+                          fields={formData.rsvp_config.custom_fields}
+                          onChange={(fields) => setFormData({
+                            ...formData,
+                            rsvp_config: { ...formData.rsvp_config, custom_fields: fields }
+                          })}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Ticketing Feature Toggle */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <input
+                        id="enable_ticketing"
+                        type="checkbox"
+                        checked={formData.enabled_features.ticketing}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          enabled_features: { ...formData.enabled_features, ticketing: e.target.checked }
+                        })}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="enable_ticketing" className="flex-1 text-sm font-medium text-gray-900 cursor-pointer">
+                        Enable Ticket Sales
+                      </label>
+                    </div>
+
+                    {/* Ticketing Settings Panel (Collapsible) */}
+                    {formData.enabled_features.ticketing && (
+                      <div className="mt-3 ml-7 p-4 bg-green-50 rounded-lg border border-green-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <h5 className="text-sm font-semibold text-gray-900 mb-3">🎫 Ticketing Settings</h5>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Price per Ticket */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Price per Ticket
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-2 text-gray-500 text-sm">฿</span>
+                              <input
+                                type="number"
+                                value={formData.ticketing_config.price_per_ticket}
+                                onChange={(e) => setFormData({
+                                  ...formData,
+                                  ticketing_config: { ...formData.ticketing_config, price_per_ticket: e.target.value ? parseFloat(e.target.value) : '' }
+                                })}
+                                className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                placeholder="0.00"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Currency */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Currency
+                            </label>
+                            <select
+                              value={formData.ticketing_config.currency}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                ticketing_config: { ...formData.ticketing_config, currency: e.target.value }
+                              })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                            >
+                              <option value="THB">THB (฿)</option>
+                              <option value="USD">USD ($)</option>
+                              <option value="EUR">EUR (€)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Payment Methods
+                          </label>
+                          <div className="space-y-2">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={formData.ticketing_config.payment_methods.includes('bank_transfer')}
+                                onChange={(e) => {
+                                  const methods = e.target.checked
+                                    ? [...formData.ticketing_config.payment_methods, 'bank_transfer']
+                                    : formData.ticketing_config.payment_methods.filter(m => m !== 'bank_transfer');
+                                  setFormData({
+                                    ...formData,
+                                    ticketing_config: { ...formData.ticketing_config, payment_methods: methods }
+                                  });
+                                }}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-700">Bank Transfer</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={formData.ticketing_config.payment_methods.includes('promptpay')}
+                                onChange={(e) => {
+                                  const methods = e.target.checked
+                                    ? [...formData.ticketing_config.payment_methods, 'promptpay']
+                                    : formData.ticketing_config.payment_methods.filter(m => m !== 'promptpay');
+                                  setFormData({
+                                    ...formData,
+                                    ticketing_config: { ...formData.ticketing_config, payment_methods: methods }
+                                  });
+                                }}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-700">PromptPay</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 cursor-not-allowed opacity-50">
+                              <input
+                                type="checkbox"
+                                disabled
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-700">Credit Card (Coming Soon)</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Future Features (Disabled) */}
+                  <div className="opacity-50 cursor-not-allowed">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <input
+                        type="checkbox"
+                        disabled
+                        className="w-4 h-4 text-gray-400 border-gray-300 rounded"
+                      />
+                      <label className="flex-1 text-sm font-medium text-gray-500">
+                        Enable Waitlist (Coming Soon)
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Start Time */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -828,49 +1167,67 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 </div>
 
                 {/* Location - Autocomplete */}
-                <div className="relative">
+                {/* Location - Autocomplete */}
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Location
                   </label>
-                  <input
-                    type="text"
-                    value={locationSearch || formData.location}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setLocationSearch(value);
-                      setFormData({ ...formData, location: value });
-                      setShowLocationDropdown(true);
-                    }}
-                    onFocus={() => setShowLocationDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Type to search locations..."
-                  />
-                  {showLocationDropdown && locations.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {locations.map((loc) => (
-                        <button
-                          key={loc.id}
-                          type="button"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setFormData({ ...formData, location: loc.name });
-                            setLocationSearch(loc.name);
-                            setShowLocationDropdown(false);
-                          }}
-                          className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
-                        >
-                          <div className="font-medium">{loc.name}</div>
-                          {loc.address && (
-                            <div className="text-xs text-gray-500">{loc.address}</div>
-                          )}
-                        </button>
-                      ))}
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={locationSearch || formData.location}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setLocationSearch(value);
+                          setFormData({ ...formData, location: value });
+                          setShowLocationDropdown(true);
+                        }}
+                        onFocus={() => {
+                          setShowLocationDropdown(true);
+                          if (locations.length === 0) {
+                            loadLocations();
+                          }
+                        }}
+                        onBlur={() => setTimeout(() => setShowLocationDropdown(false), 200)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Type to search locations..."
+                      />
+                      {showLocationDropdown && locations.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                          {locations.map((loc) => (
+                            <button
+                              key={loc.id}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setFormData({ ...formData, location: loc.name });
+                                setLocationSearch(loc.name);
+                                setShowLocationDropdown(false);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm"
+                            >
+                              <div className="font-medium">{loc.name}</div>
+                              {loc.address && (
+                                <div className="text-xs text-gray-500">{loc.address}</div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {loadingLocations && (
+                        <p className="mt-1 text-xs text-gray-500">Loading locations...</p>
+                      )}
                     </div>
-                  )}
-                  {loadingLocations && (
-                    <p className="mt-1 text-xs text-gray-500">Loading locations...</p>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateLocationModal(true)}
+                      className="px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-transparent rounded-md hover:bg-blue-100 whitespace-nowrap"
+                      title="Create new location"
+                    >
+                      + New
+                    </button>
+                  </div>
                 </div>
 
                 {/* Venue Area */}
@@ -1379,6 +1736,17 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         onClose={() => setShowMediaPicker(false)}
         onSelect={(url) => setFormData({ ...formData, hero_image_url: url })}
         title="Select Event Hero Image"
+      />
+
+      <CreateLocationModal
+        visible={showCreateLocationModal}
+        onClose={() => setShowCreateLocationModal(false)}
+        onSuccess={(locationData) => {
+          loadLocations();
+          setFormData({ ...formData, location: locationData.name });
+          setLocationSearch(locationData.name);
+          setShowCreateLocationModal(false);
+        }}
       />
     </div>
   );
