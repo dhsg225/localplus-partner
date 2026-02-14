@@ -187,7 +187,14 @@ const MenuManagement: React.FC = () => {
             const { apiService } = await import('../services/apiService');
             const result = await apiService.uploadMedia(file, businessId || undefined);
             if (result.url) {
-                setEditingItem({ ...editingItem, image_url: result.url });
+                const updatedItem = { ...editingItem, image_url: result.url };
+                setEditingItem(updatedItem);
+
+                // [New] Auto-save if uploading directly from card (modal closed)
+                if (!showEditModal && updatedItem.id) {
+                    await restaurantService.updateMenuItem(updatedItem.id, updatedItem);
+                    loadMenu();
+                }
             }
         } catch (err) {
             console.error('Photo upload failed:', err);
@@ -336,6 +343,13 @@ const MenuManagement: React.FC = () => {
                                                     title="Move Down"
                                                 >
                                                     <ArrowDown size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => { setEditingItem(item); setTimeout(() => dishImageRef.current?.click(), 0); }}
+                                                    className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                    title="Upload Photo"
+                                                >
+                                                    <ImageIcon size={14} />
                                                 </button>
                                             </div>
                                             <button
