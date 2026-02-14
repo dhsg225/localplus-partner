@@ -402,70 +402,73 @@ const MenuManagement: React.FC = () => {
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Category</label>
+                                    <input
+                                        className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                        value={editingItem.category}
+                                        onChange={e => setEditingItem({ ...editingItem, category: e.target.value })}
+                                        placeholder="Appetizers"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Price (THB)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-slate-400">฿</span>
                                         <input
-                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
-                                            value={editingItem.category}
-                                            onChange={e => setEditingItem({ ...editingItem, category: e.target.value })}
-                                            placeholder="Appetizers"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Photo</label>
-                                        <div
-                                            onClick={() => dishImageRef.current?.click()}
-                                            className="relative aspect-video bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer group"
-                                        >
-                                            {editingItem.image_url ? (
-                                                <img src={editingItem.image_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                            ) : (
-                                                <div className="text-center">
-                                                    <ImageIcon size={24} className="text-slate-300 mx-auto mb-2" />
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Click to upload</span>
-                                                </div>
-                                            )}
-                                            {isUploadingImage && (
-                                                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
-                                                    <Loader2 className="animate-spin text-indigo-600" size={24} />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <input
-                                            type="file"
-                                            className="hidden"
-                                            ref={dishImageRef}
-                                            accept="image/*"
-                                            onChange={handleDishPhotoUpload}
+                                            type="number"
+                                            required
+                                            className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                            value={editingItem.price}
+                                            onChange={e => setEditingItem({ ...editingItem, price: parseFloat(e.target.value) })}
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Price (THB)</label>
-                                        <div className="relative">
-                                            <span className="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-slate-400">฿</span>
-                                            <input
-                                                type="number"
-                                                required
-                                                className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
-                                                value={editingItem.price}
-                                                onChange={e => setEditingItem({ ...editingItem, price: parseFloat(e.target.value) })}
-                                            />
-                                        </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Description</label>
+                                <textarea
+                                    rows={4}
+                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-medium text-slate-600 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none resize-none"
+                                    value={editingItem.description}
+                                    onChange={e => setEditingItem({ ...editingItem, description: e.target.value })}
+                                    placeholder="Tell us about this dish..."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Photo</label>
+                                <div className="grid grid-cols-2 gap-4 items-center">
+                                    <div
+                                        onClick={() => dishImageRef.current?.click()}
+                                        className="relative aspect-video bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer group"
+                                    >
+                                        {editingItem.image_url ? (
+                                            <img src={editingItem.image_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                        ) : (
+                                            <div className="text-center">
+                                                <ImageIcon size={24} className="text-slate-300 mx-auto mb-2" />
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase">Click to upload</span>
+                                            </div>
+                                        )}
+                                        {isUploadingImage && (
+                                            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                                                <Loader2 className="animate-spin text-indigo-600" size={24} />
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Description</label>
-                                        <textarea
-                                            rows={5}
-                                            className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-medium text-slate-600 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none resize-none"
-                                            value={editingItem.description}
-                                            onChange={e => setEditingItem({ ...editingItem, description: e.target.value })}
-                                            placeholder="Tell us about this dish..."
-                                        />
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">
+                                        High-quality dish photos can increase orders by up to 30%.
                                     </div>
                                 </div>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    ref={dishImageRef}
+                                    accept="image/*"
+                                    onChange={handleDishPhotoUpload}
+                                />
                             </div>
                         </div>
                         <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
