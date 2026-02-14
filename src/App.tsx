@@ -17,8 +17,10 @@ import VenuesDashboard from './pages/VenuesDashboard'; // [2025-12-02] - Venues 
 import ActivitiesDashboard from './pages/ActivitiesDashboard'; // [2025-12-02] - Activities management
 import AttractionsDashboard from './pages/AttractionsDashboard'; // [2025-12-02] - Attractions management
 import DMODashboard from './pages/DMODashboard'; // [2025-12-02] - DMO Dashboard
+import MenuManagement from './pages/MenuManagement'; // [2026-02-13] - Restaurant Menu management
 import Navigation from './components/Navigation';
 import PartnerLanding from './pages/PartnerLanding';
+import PublicMenu from './pages/PublicMenu';
 
 interface User {
   id: string;
@@ -66,6 +68,15 @@ function App() {
     checkSession();
   }, []);
 
+  // [2026-02-14] - Handle Public Routes (No Auth)
+  if (location.pathname.startsWith('/menu/p/')) {
+    return (
+      <Routes>
+        <Route path="/menu/p/:businessId" element={<PublicMenu />} />
+      </Routes>
+    );
+  }
+
   const handleLogout = async () => {
     try {
       await authService.signOut();
@@ -83,6 +94,7 @@ function App() {
     const path = location.pathname;
     if (path === '/dashboard' || path === '/') return 'dashboard';
     if (path === '/bookings') return 'bookings';
+    if (path === '/menu') return 'menu';
     if (path === '/notifications') return 'notifications';
     if (path === '/settings') return 'settings'; // [2025-12-03] - Settings page
     if (path === '/events') return 'events'; // [2025-11-28 23:35] - Highlight Events tab
@@ -148,6 +160,7 @@ function App() {
           <Route path="/notifications" element={<NotificationSettings />} />
           <Route path="/settings" element={<Settings />} /> {/* [2025-12-03] - Settings page with tabs */}
           <Route path="/events" element={<EventsDashboard />} />
+          <Route path="/menu" element={<MenuManagement />} />
           <Route path="/admin" element={<AdminUsers />} />
           <Route path="/taxonomy" element={<EventTaxonomyManager />} />
           <Route path="/structure" element={<Structure />} />
