@@ -1,6 +1,7 @@
 // [2025-12-01] - Modal for creating new organizers
 import React, { useState } from 'react';
 import { apiService } from '../services/apiService';
+import MediaPicker from './MediaPicker';
 
 interface CreateOrganizerModalProps {
   visible: boolean;
@@ -23,6 +24,7 @@ const CreateOrganizerModal: React.FC<CreateOrganizerModalProps> = ({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +39,7 @@ const CreateOrganizerModal: React.FC<CreateOrganizerModalProps> = ({
       }
 
       await apiService.createOrganizer(formData);
-      
+
       // Reset form
       setFormData({
         name: '',
@@ -156,18 +158,58 @@ const CreateOrganizerModal: React.FC<CreateOrganizerModalProps> = ({
                   />
                 </div>
 
-                {/* Image URL */}
+                {/* Image Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Image URL
+                    Image
                   </label>
-                  <input
-                    type="url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="https://..."
-                  />
+                  <div className="flex items-start gap-4">
+                    {formData.image_url ? (
+                      <div className="relative w-40 h-24 bg-gray-100 rounded-md overflow-hidden border border-gray-200">
+                        <img
+                          src={`${formData.image_url}?width=400`}
+                          alt="Organizer preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, image_url: '' })}
+                          className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-sm"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaPicker(true)}
+                        className="w-40 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        <svg className="w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span className="text-xs text-gray-500 font-medium">Add Photo</span>
+                      </button>
+                    )}
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={formData.image_url}
+                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm mb-2"
+                        placeholder="Image URL or use picker"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaPicker(true)}
+                        className="text-sm text-blue-600 font-medium hover:text-blue-700"
+                      >
+                        Open Media Manager
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Website URL */}
@@ -206,6 +248,16 @@ const CreateOrganizerModal: React.FC<CreateOrganizerModalProps> = ({
           </form>
         </div>
       </div>
+
+      {/* Media Picker Modal */}
+      <MediaPicker
+        visible={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={(url) => {
+          setFormData({ ...formData, image_url: url });
+          setShowMediaPicker(false);
+        }}
+      />
     </div>
   );
 };
