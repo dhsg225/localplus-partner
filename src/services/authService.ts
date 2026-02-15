@@ -17,15 +17,15 @@ export const authService = {
     try {
       // [2025-11-30] - API returns { success: true, data: { user, session } }
       const response = await apiService.login(email, password);
-      
+
       // Handle API Gateway response format: { success: true, data: { user, session } }
       const userData = response.data?.user || response.user;
       const sessionData = response.data?.session || response.session;
-      
+
       if (!userData || !sessionData) {
         throw new Error('Invalid response format from login API');
       }
-      
+
       // Store token in localStorage
       if (sessionData.access_token) {
         localStorage.setItem('auth_token', sessionData.access_token);
@@ -33,7 +33,7 @@ export const authService = {
         if (sessionData.refresh_token) {
           localStorage.setItem('auth_refresh_token', sessionData.refresh_token);
         }
-        
+
         // [2025-11-30] - Set Supabase session so RLS policies work
         // The API returns the full session object from Supabase
         // This is CRITICAL for auth.uid() to work in RLS policies
@@ -42,7 +42,7 @@ export const authService = {
             access_token: sessionData.access_token,
             refresh_token: sessionData.refresh_token || sessionData.access_token
           });
-          
+
           if (sessionResult.error) {
             console.error('[AUTH] Error setting Supabase session:', sessionResult.error);
           } else if (sessionResult.data?.session) {
@@ -57,7 +57,7 @@ export const authService = {
           console.error('[AUTH] Error setting Supabase session:', err);
         }
       }
-      
+
       return {
         user: userData,
         session: sessionData
@@ -83,7 +83,7 @@ export const authService = {
     try {
       const token = localStorage.getItem('auth_token');
       if (!token) return null;
-      
+
       // [2025-11-30] - Try to refresh token if expired
       try {
         const { data: { session: existingSession } } = await supabase.auth.getSession();
@@ -106,9 +106,9 @@ export const authService = {
       } catch (refreshErr) {
         console.warn('[AUTH] Token refresh failed, will try API call:', refreshErr);
       }
-      
+
       const response = await apiService.getCurrentUser();
-      
+
       // Ensure Supabase session is set for RLS policies
       if (response.user) {
         try {
@@ -118,13 +118,25 @@ export const authService = {
               access_token: currentToken,
               refresh_token: localStorage.getItem('auth_refresh_token') || currentToken
             });
-            console.log('[AUTH] Supabase session restored:', sessionResult.data?.session ? 'success' : 'failed', sessionResult.error?.message || '');
+
+            if (sessionResult.error) {
+              console.error('[AUTH] Error setting Supabase session:', sessionResult.error);
+              if (sessionResult.error.message.includes('Refresh token is not valid') ||
+                sessionResult.error.message.includes('Invalid Refresh Token')) {
+                console.warn('[AUTH] Invalid refresh token detected. Clearing session.');
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('auth_refresh_token');
+                return null;
+              }
+            } else {
+              console.log('[AUTH] Supabase session restored:', sessionResult.data?.session ? 'success' : 'failed');
+            }
           }
         } catch (err) {
           console.error('[AUTH] Error restoring Supabase session:', err);
         }
       }
-      
+
       return response.user;
     } catch (error) {
       console.error('Get current user error:', error);
@@ -136,7 +148,7 @@ export const authService = {
     try {
       const user = await this.getCurrentUser();
       const token = localStorage.getItem('auth_token');
-      
+
       return {
         user,
         session: token ? { access_token: token } : null
@@ -156,29 +168,29 @@ export const authService = {
   ): Promise<{ user: User; session: any }> {
     try {
       const response = await apiService.register(email, password, businessType, businessName);
-      
+
       // Handle API response format
       const userData = response.data?.user || response.user;
       const sessionData = response.data?.session || response.session;
-      
+
       if (!userData || !sessionData) {
         throw new Error('Invalid response format from registration API');
       }
-      
+
       // Store token in localStorage
       if (sessionData.access_token) {
         localStorage.setItem('auth_token', sessionData.access_token);
         if (sessionData.refresh_token) {
           localStorage.setItem('auth_refresh_token', sessionData.refresh_token);
         }
-        
+
         // Set Supabase session so RLS policies work
         try {
           const sessionResult = await supabase.auth.setSession({
             access_token: sessionData.access_token,
             refresh_token: sessionData.refresh_token || sessionData.access_token
           });
-          
+
           if (sessionResult.error) {
             console.error('[AUTH] Error setting Supabase session:', sessionResult.error);
           } else if (sessionResult.data?.session) {
@@ -188,7 +200,7 @@ export const authService = {
           console.error('[AUTH] Error setting Supabase session:', err);
         }
       }
-      
+
       return {
         user: userData,
         session: sessionData

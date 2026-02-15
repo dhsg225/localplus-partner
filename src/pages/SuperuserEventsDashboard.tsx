@@ -1033,7 +1033,7 @@ const SuperuserEventsDashboard: React.FC = () => {
                               <div className="text-sm text-gray-900">{formatDate(event.start_time)}</div>
                               <div className="text-xs text-gray-500">to {formatDate(event.end_time)}</div>
                               {event.is_recurring && (
-                                <div className="mt-1 flex items-center gap-1 text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded w-fit">
+                                <div className="mt-1 flex items-center gap-1 text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded w-fit whitespace-nowrap">
                                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                   </svg>
@@ -1057,8 +1057,8 @@ const SuperuserEventsDashboard: React.FC = () => {
                             <td className="px-4 py-4 text-sm text-gray-500">
                               {event.metadata?.organizer_name || '—'}
                             </td>
-                            <td className="px-4 py-4 text-sm text-gray-500 max-w-[150px]">
-                              <div className="truncate" title={event.metadata?.organizer_address || event.location || event.venue_area || ''}>
+                            <td className="px-4 py-4 text-sm text-gray-500 max-w-[200px]">
+                              <div className="whitespace-normal break-words text-xs">
                                 {event.metadata?.organizer_address || event.location || event.venue_area || '—'}
                               </div>
                             </td>
