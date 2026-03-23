@@ -1,16 +1,7 @@
 {
   "headers": {
-    "x-nextjs-stale-time": "300",
+    "x-nextjs-stale-time": "4294967294",
     "x-nextjs-prerender": "1",
     "x-next-cache-tags": "_N_T_/layout,_N_T_/partners/layout,_N_T_/partners/explainer/layout,_N_T_/partners/explainer/page,_N_T_/partners/explainer"
-  },
-  "segmentPaths": [
-    "/_tree",
-    "/_full",
-    "/partners/explainer/__PAGE__",
-    "/partners/explainer",
-    "/partners",
-    "/_index",
-    "/_head"
-  ]
+  }
 }

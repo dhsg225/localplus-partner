@@ -1,8 +1,1 @@
-{
-  "/_global-error/page": "/_global-error",
-  "/_not-found/page": "/_not-found",
-  "/explainer/page": "/explainer",
-  "/favicon.ico/route": "/favicon.ico",
-  "/page": "/",
-  "/partners/explainer/page": "/partners/explainer"
-}
+{"/_not-found/page":"/_not-found","/favicon.ico/route":"/favicon.ico","/explainer/page":"/explainer","/page":"/","/partners/explainer/page":"/partners/explainer"}
