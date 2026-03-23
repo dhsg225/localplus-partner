@@ -1,5 +1,6 @@
 {
   "framework": "nextjs",
+  "installCommand": "npm install --legacy-peer-deps && npm install caniuse-lite --legacy-peer-deps && npx browserslist@latest --update-db",
   "buildCommand": "next build",
   "outputDirectory": ".next",
   "cleanUrls": true,
