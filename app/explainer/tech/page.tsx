@@ -21,24 +21,71 @@ export default function TechPage() {
                 </div>
             </section>
 
-            {/* Tech Deep Dive */}
+            {/* The Standard: MCP */}
+            <section className="py-24 px-6 bg-gray-50">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+                    <div className="space-y-8">
+                         <div className="space-y-4">
+                            <h2 className="text-4xl font-black text-gray-900 italic tracking-tighter uppercase font-heading">MCP (Model Context Protocol)</h2>
+                            <p className="text-xl text-gray-400 font-bold lowercase">Standardizing how AI reads business data.</p>
+                         </div>
+                         <p className="text-lg text-gray-600 font-medium leading-relaxed">LocalPlus isn't just a database; it is a **Distributed MCP Server**. By using MCP, we allow LLMs like Claude, Gemini, and GPT to "Plug in" and read your real-time availability, inventory, and facts directly, without the risks of hallucination. We act as the authoritative bridge between your binary data and the AI's semantic logic.</p>
+                         <div className="flex flex-wrap gap-4">
+                              <span className="px-4 py-2 bg-white rounded-xl border border-gray-200 text-xs font-black text-gray-900 uppercase">Universal Interop</span>
+                              <span className="px-4 py-2 bg-white rounded-xl border border-gray-200 text-xs font-black text-blue-500 uppercase">Context Injection</span>
+                              <span className="px-4 py-2 bg-white rounded-xl border border-gray-200 text-xs font-black text-green-500 uppercase">Tool Calling support</span>
+                         </div>
+                    </div>
+                    <div className="p-12 bg-gray-900 rounded-[56px] shadow-3xl text-white space-y-6">
+                        <div className="flex items-center space-x-3 mb-8">
+                            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-black">M</div>
+                            <p className="text-xs font-black tracking-widest text-blue-400 uppercase">MCP Server Status: Active</p>
+                        </div>
+                        <div className="space-y-4 opacity-80">
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex justify-between">
+                                <span className="text-xs font-heading uppercase text-white/50">Read Inventory</span>
+                                <span className="text-xs font-black text-green-400">GRANTED</span>
+                            </div>
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex justify-between">
+                                <span className="text-xs font-heading uppercase text-white/50">Context Window Injection</span>
+                                <span className="text-xs font-black text-green-400">OPTIMIZED</span>
+                            </div>
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex justify-between">
+                                <span className="text-xs font-heading uppercase text-white/50">Semantic RAG Overlap</span>
+                                <span className="text-xs font-black text-blue-400">99.4% Match</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* The Infrastructure: Bunny Edge & Containers */}
             <section className="py-24 px-6">
-                <div className="max-w-4xl mx-auto space-y-24">
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                         {[
-                             { type: "mention", title: "Semantic Mapping", desc: "Modeling business intent into the LLM latent space via knowledge graph indexing." },
-                             { type: "citation", title: "Fact Grounding", desc: "Converting unstructured business data into verifiable, citable facts for RAG systems." },
-                             { type: "click", title: "Token Optimization", desc: "Reducing the path-to-action for the end user inside the AI conversation loop." }
-                         ].map((item, i) => (
-                             <div key={i} className="flex flex-col items-center text-center space-y-6 p-10 bg-white rounded-[40px] border border-gray-100 shadow-sm transition-all group">
-                                 <div className="scale-150 transform group-hover:scale-[1.7] transition-transform duration-500">
-                                     <MCCIndicators type={item.type as any} showLabel={false} />
-                                 </div>
-                                 <h3 className="text-xl font-black text-gray-900 italic tracking-tighter uppercase font-heading leading-tight">{item.title}</h3>
-                                 <p className="text-sm text-gray-400 font-medium leading-relaxed">{item.desc}</p>
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
+                    <div className="p-16 bg-blue-50/50 rounded-[48px] space-y-8 border border-blue-100">
+                         <h3 className="text-3xl font-black text-gray-900 italic tracking-tighter uppercase font-heading leading-none">The Global Edge (On Bunny)</h3>
+                         <p className="text-lg text-gray-500 font-bold leading-relaxed">AI moves at the speed of thought. To avoid being dropped from the context window, your data must be available in **sub-10ms**. We deploy your business profile to 110+ nodes on the **Bunny.net Edge Network**, ensuring that no matter where the AI is processing, your 'Fact Grounding' is instantaneous.</p>
+                         <div className="pt-8 border-t border-blue-200 grid grid-cols-2 gap-8">
+                             <div>
+                                 <p className="text-xs font-black text-blue-500 uppercase mb-1">Global Latency</p>
+                                 <p className="text-2xl font-black text-gray-900">8.2 ms avg.</p>
                              </div>
-                         ))}
-                     </div>
+                             <div>
+                                 <p className="text-xs font-black text-blue-500 uppercase mb-1">Uptime</p>
+                                 <p className="text-2xl font-black text-gray-900">99.99%</p>
+                             </div>
+                         </div>
+                    </div>
+                    <div className="p-16 bg-gray-50 rounded-[48px] space-y-8 border border-gray-100">
+                         <h3 className="text-3xl font-black text-gray-900 italic tracking-tighter uppercase font-heading leading-none">Isolated MCP Containers</h3>
+                         <p className="text-lg text-gray-500 font-bold leading-relaxed">Trust is a primary metric. Each Partner's data is housed in an **Isolated MCP Container**. This ensures that your business proprietary data never bleeds into a competitor's training set, while remaining fully accessible to authorized AI queries via the Protocol.</p>
+                         <div className="pt-8 border-t border-gray-200">
+                             <div className="flex items-center space-x-3">
+                                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                                 <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Distributed Docker Mesh Active</p>
+                             </div>
+                         </div>
+                    </div>
                 </div>
             </section>
         </main>
