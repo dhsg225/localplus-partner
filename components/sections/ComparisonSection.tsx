@@ -10,7 +10,7 @@ export const ComparisonSection = () => {
       <motion.div 
         initial={{ width: "50%" }}
         whileInView={{ backgroundColor: "#ffffff" }}
-        className="relative w-full md:w-1/2 flex flex-col items-center justify-center p-12 overflow-hidden grayscale opacity-40 blur-[1px]"
+        className="relative w-full md:w-1/2 flex flex-col items-center justify-center p-12 overflow-hidden grayscale opacity-60"
       >
         <div className="absolute inset-0 bg-gray-50/50 backdrop-blur-sm z-0" />
         <div className="absolute top-12 left-12 z-10">

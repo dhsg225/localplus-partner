@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { HeroSection } from "@/components/sections/HeroSection"
 import { LogicalChoiceSequence } from "@/components/sections/LogicalChoiceSequence"
+import { SegmentedContentSections } from "@/components/sections/SegmentedContentSections"
 import { ComparisonSection } from "@/components/sections/ComparisonSection"
 import { Eli5Section } from "@/components/sections/Eli5Section"
 import { IndustryCardSection } from "@/components/sections/IndustryCardSection"
@@ -40,10 +41,14 @@ export default function ExplainerPage() {
              <span className="text-sm font-black tracking-tight text-gray-900 uppercase">LocalPlus</span>
           </div>
           
-          <div className="hidden md:flex items-center space-x-10">
-             <a href="#" className="text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-widest">For Consumers</a>
-             <a href="#" className="text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-widest">For Businesses</a>
-             <a href="#" className="text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-widest">The Tech</a>
+          <div className="hidden lg:flex items-center space-x-8">
+             <a href="#" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Platform</a>
+             <a href="#" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Solutions</a>
+             <a href="#" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Pricing</a>
+             <div className="h-4 w-[1px] bg-gray-200 mx-2" />
+             <a href="#consumers" className="text-xs font-bold text-gray-900 hover:opacity-70 transition-opacity uppercase tracking-widest">For Consumers</a>
+             <a href="#businesses" className="text-xs font-bold text-gray-900 hover:opacity-70 transition-opacity uppercase tracking-widest">For Businesses</a>
+             <a href="#tech" className="text-xs font-bold text-gray-900 hover:opacity-70 transition-opacity uppercase tracking-widest">The Tech</a>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -58,6 +63,8 @@ export default function ExplainerPage() {
       <HeroSection />
 
       <LogicalChoiceSequence />
+
+      <SegmentedContentSections />
       
       <ComparisonSection />
       
