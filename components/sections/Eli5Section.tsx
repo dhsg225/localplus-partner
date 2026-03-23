@@ -32,11 +32,11 @@ const LoopDiagram = () => {
         {items.map((item, idx) => (
           <motion.div
             key={idx}
-            whileHover={{ scale: 1.05 }}
-            className="flex flex-col items-center justify-center space-y-2 p-6 bg-white rounded-3xl shadow-xl border border-gray-100 z-10"
+            whileHover={{ scale: 1.1, rotate: idx % 2 === 0 ? 2 : -2 }}
+            className="flex flex-col items-center justify-center space-y-2 p-6 bg-white/80 backdrop-blur-xl rounded-[32px] shadow-2xl border border-white z-10 hover:shadow-blue-500/20 transition-all duration-300"
           >
-            <span className="text-xl font-black text-gray-900">{item.label}</span>
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center leading-tight">
+            <span className="text-2xl font-black text-gray-900 leading-none">{item.label}</span>
+            <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest text-center leading-tight">
                {item.description}
             </span>
           </motion.div>
@@ -67,7 +67,7 @@ export const Eli5Section = () => {
           >
             How it works
           </motion.div>
-          <h2 className="text-5xl font-extrabold text-gray-900 italic tracking-tight">The LocalPlus Loop</h2>
+          <h2 className="text-5xl font-black text-gray-900 italic tracking-tighter font-heading">The LocalPlus Loop</h2>
           <p className="max-w-xl mx-auto text-lg text-gray-500 font-medium leading-relaxed">
             AI models are the new gatekeepers. We don't optimize for search engines; we optimize for <span className="text-gray-900 font-bold">Answers</span>.
           </p>

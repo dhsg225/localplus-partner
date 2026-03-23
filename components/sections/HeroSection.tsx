@@ -5,8 +5,15 @@ import { MCCIndicators } from "../ui/MCCIndicators"
 
 export const HeroSection = () => {
   return (
-    <section className="relative h-screen flex flex-col items-center justify-center bg-gray-50/50 pt-20 px-6 overflow-hidden">
-      <div className="max-w-7xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+    <section className="relative h-[110vh] min-h-[800px] flex flex-col items-center justify-center bg-white pt-32 px-6 overflow-hidden">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-[10%] left-[5%] w-96 h-96 bg-blue-100/30 rounded-full blur-[120px] animate-pulse-slow" />
+        <div className="absolute bottom-[20%] right-[10%] w-[500px] h-[500px] bg-green-100/20 rounded-full blur-[150px]" />
+        <div className="absolute top-[40%] right-[30%] w-64 h-64 bg-amber-100/20 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-20 items-center z-10">
         
         {/* Left Side: Text and CTA */}
         <motion.div
@@ -15,13 +22,13 @@ export const HeroSection = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="flex flex-col space-y-8 text-left"
         >
-          <div className="space-y-4">
-            <h1 className="text-6xl md:text-7xl font-extrabold tracking-tight text-gray-900 leading-tight">
-              Get chosen by AI. <br />
-              <span className="text-gray-400">Not lost in lists.</span>
+          <div className="space-y-6">
+            <h1 className="text-7xl md:text-8xl font-black tracking-tighter text-gray-900 leading-[0.95] font-heading">
+              Get chosen <br />by AI. <br />
+              <span className="bg-gradient-to-r from-gray-400 via-gray-300 to-gray-500 bg-clip-text text-transparent italic">Not lost in lists.</span>
             </h1>
-            <p className="max-w-lg text-lg text-gray-500 font-medium">
-              LocalPlus gives one clear answer instead of 20 links. Turn your business into the only logical choice for AI discovery.
+            <p className="max-w-md text-xl text-gray-400 font-bold leading-relaxed lowercase tracking-tight">
+              LocalPlus gives one clear answer instead of 20 links. Turn your business into the only logical choice for <span className="text-gray-900 italic">AI discovery</span>.
             </p>
           </div>
           
@@ -37,10 +44,10 @@ export const HeroSection = () => {
         
         {/* Right Side: Animated Flow */}
         <motion.div
-           initial={{ opacity: 0, scale: 0.9 }}
+           initial={{ opacity: 0, scale: 0.95 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ duration: 1, delay: 0.2 }}
-           className="relative aspect-square flex items-center justify-center p-4 bg-white rounded-3xl shadow-xl border border-gray-100"
+           className="relative aspect-square flex items-center justify-center p-8 bg-white/40 backdrop-blur-3xl rounded-[48px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-white/80"
         >
           <div className="relative w-full max-w-sm space-y-6 flex flex-col">
             {/* User Query */}
@@ -70,14 +77,14 @@ export const HeroSection = () => {
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 2, duration: 0.8 }}
-              className="p-6 bg-white border-2 border-gray-900 rounded-3xl shadow-2xl space-y-4"
+              className="p-8 bg-gray-900 rounded-[32px] shadow-3xl space-y-6 border border-white/10 group"
             >
               <div className="flex justify-between items-start">
-                <h3 className="text-xl font-bold">The Brunch Club</h3>
+                <h3 className="text-2xl font-black text-white italic tracking-tighter">The Brunch Club</h3>
                 <MCCIndicators type="citation" />
               </div>
-              <p className="text-sm text-gray-600">They currently have a short 10-minute wait and specialize in farm-to-table eggs benedict.</p>
-              <div className="flex items-center space-x-3 pt-2">
+              <p className="text-sm text-gray-400 font-medium leading-relaxed">They currently have a short 10-minute wait and specialize in farm-to-table eggs benedict.</p>
+              <div className="flex items-center space-x-4 pt-4 border-t border-white/10">
                 <MCCIndicators type="mention" label="Mentions" />
                 <MCCIndicators type="click" label="Book Table ↗" />
               </div>

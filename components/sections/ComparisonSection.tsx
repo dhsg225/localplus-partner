@@ -9,11 +9,12 @@ export const ComparisonSection = () => {
       {/* Old Side: Search Clutter */}
       <motion.div 
         initial={{ width: "50%" }}
-        whileInView={{ backgroundColor: "#f9fafb" }}
-        className="relative w-full md:w-1/2 flex flex-col items-center justify-center p-12 border-r border-gray-100"
+        whileInView={{ backgroundColor: "#ffffff" }}
+        className="relative w-full md:w-1/2 flex flex-col items-center justify-center p-12 overflow-hidden grayscale opacity-40 blur-[1px]"
       >
-        <div className="absolute top-12 left-12">
-          <h2 className="text-2xl font-bold text-gray-400">OLD</h2>
+        <div className="absolute inset-0 bg-gray-50/50 backdrop-blur-sm z-0" />
+        <div className="absolute top-12 left-12 z-10">
+          <h2 className="text-2xl font-black text-gray-300 italic tracking-tighter">THE PAST</h2>
         </div>
         
         <div className="space-y-6 w-full max-w-sm">
@@ -52,17 +53,19 @@ export const ComparisonSection = () => {
 
       {/* New Side: LocalPlus Clean Answer */}
       <motion.div 
-        initial={{ backgroundColor: "#000" }}
+        initial={{ backgroundColor: "#f9fafb" }}
         whileInView={{ backgroundColor: "#ffffff" }}
-        className="relative w-full md:w-1/2 flex flex-col items-center justify-center p-12 overflow-hidden"
+        className="relative w-full md:w-1/2 flex flex-col items-center justify-center p-12 overflow-hidden border-l border-gray-100"
       >
+        {/* Techy Background for New Side */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-50/50 via-green-50/30 to-white -z-10" />
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
           className="absolute top-12 right-12"
         >
-          <h2 className="text-2xl font-black text-gray-900">LOCALPLUS</h2>
+          <h2 className="text-2xl font-black text-gray-900 italic tracking-tighter font-heading">THE FUTURE</h2>
         </motion.div>
         
         <div className="relative w-full max-w-sm space-y-8 z-10">
