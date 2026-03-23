@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { HeroSection } from "@/components/sections/HeroSection"
+import { LogicalChoiceSequence } from "@/components/sections/LogicalChoiceSequence"
 import { ComparisonSection } from "@/components/sections/ComparisonSection"
 import { Eli5Section } from "@/components/sections/Eli5Section"
 import { IndustryCardSection } from "@/components/sections/IndustryCardSection"
@@ -39,10 +40,10 @@ export default function ExplainerPage() {
              <span className="text-sm font-black tracking-tight text-gray-900 uppercase">LocalPlus</span>
           </div>
           
-          <div className="hidden md:flex items-center space-x-8">
-             <a href="#" className="text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-widest">Platform</a>
-             <a href="#" className="text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-widest">Solutions</a>
-             <a href="#" className="text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-widest">Pricing</a>
+          <div className="hidden md:flex items-center space-x-10">
+             <a href="#" className="text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-widest">For Consumers</a>
+             <a href="#" className="text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-widest">For Businesses</a>
+             <a href="#" className="text-xs font-bold text-gray-600 hover:text-gray-900 transition-colors uppercase tracking-widest">The Tech</a>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -55,6 +56,8 @@ export default function ExplainerPage() {
 
       {/* Sections */}
       <HeroSection />
+
+      <LogicalChoiceSequence />
       
       <ComparisonSection />
       
