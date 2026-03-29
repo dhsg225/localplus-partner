@@ -1,9 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { motion } from "framer-motion"
-import { HeroSection } from "@/components/sections/HeroSection"
-import { LogicalChoiceSequence } from "@/components/sections/LogicalChoiceSequence"
-import { ComparisonSection } from "@/components/sections/ComparisonSection"
+import { PlatformHero } from "@/components/sections/PlatformHero"
+import { IndustryCardSection } from "@/components/sections/IndustryCardSection"
+import { PhilosophySection } from "@/components/sections/PhilosophySection"
 import { CTASection, Footer } from "@/components/sections/CTASection"
 import ExplainerNavbar from "@/components/ui/ExplainerNavbar"
 
@@ -16,20 +15,25 @@ export default async function HomePage() {
     redirect('/dashboard')
   }
 
-  // Otherwise, show the Full Platform Explainer (Root /)
+  // Otherwise, show the True LocalPlus Platform Explainer (Macro Narrative)
+  // v1.3.3: Correct Platform vs Answer Engine separation.
   return (
-    <main className="relative w-full overflow-x-hidden selection:bg-gray-900 selection:text-white">
+    <main className="relative w-full overflow-x-hidden selection:bg-blue-500 selection:text-white">
       <ExplainerNavbar />
       
-      {/* Sections: Platform narrative (Hero, Logical Choice, etc.) */}
-      <HeroSection />
+      {/* 1. Platform-level Hero: The Operating System */}
+      <PlatformHero />
 
-      <LogicalChoiceSequence />
+      {/* 2. Industry-specific Modules: Restaurants, Home Services, Clinics, Events */}
+      <div id="industries">
+        <IndustryCardSection />
+      </div>
 
-      <ComparisonSection />
+      {/* 3. Platform Philosophy: Push vs Pull, Operational Reality */}
+      <PhilosophySection />
       
+      {/* 4. Conversion and Footer */}
       <CTASection />
-      
       <Footer />
     </main>
   )
