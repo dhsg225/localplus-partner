@@ -1,4 +1,4 @@
-import { eventsApi, organizationApi } from '@/lib/api'
+import { eventsApi, organizationApi } from '@/lib/api.server'
 import DashboardHeader from '@/components/DashboardHeader'
 import EventsList from '@/app/(dashboard)/events/components/EventsList'
 import { Calendar } from 'lucide-react'

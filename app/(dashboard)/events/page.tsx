@@ -1,4 +1,4 @@
-import { eventsApi, organizationApi } from '@/lib/api'
+import { eventsApi, organizationApi } from '@/lib/api.server'
 import DashboardHeader from '@/components/DashboardHeader'
 import EventsDashboard from '@/app/(dashboard)/events/components/EventsDashboard'
 import AIDiscoveryInsights from '@/app/(dashboard)/events/components/AIDiscoveryInsights'
