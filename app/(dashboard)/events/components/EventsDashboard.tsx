@@ -253,9 +253,9 @@ export default function EventsDashboard({
                         </td>
                         <td className="p-6">
                            <div className="flex flex-wrap gap-1">
-                              {(event.eventType || event.categories)?.split(',').map((c: string) => (
+                              {(event.event_type_names || event.eventType || event.categories || 'general').split(',').map((c: string) => (
                                 <span key={c} className="px-2 py-0.5 bg-red-50 text-red-500 text-[8px] font-black uppercase rounded-lg border border-red-100">{c.trim()}</span>
-                              )) || <span className="text-gray-300 italic opacity-50">Uncategorized</span>}
+                              ))}
                            </div>
                         </td>
                         <td className="p-6">
@@ -267,10 +267,10 @@ export default function EventsDashboard({
                            </span>
                         </td>
                         <td className="p-6 font-bold text-gray-500 italic">
-                           {event.venue_name || '—'}
+                           {event.venue_area || event.location || event.venue_name || '—'}
                         </td>
                         <td className="p-6 font-bold text-gray-500 italic">
-                           {event.organization_name || '—'}
+                           {event.metadata?.organizer_name || event.organization_name || '—'}
                         </td>
                         <td className="p-6 text-right">
                            <div className="flex items-center justify-end space-x-2">
