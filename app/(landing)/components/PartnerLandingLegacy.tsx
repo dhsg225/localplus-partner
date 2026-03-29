@@ -2,11 +2,7 @@
 
 import React from 'react';
 
-interface PartnerLandingLegacyProps {
-  onLoginClick: () => void;
-}
-
-const PartnerLandingLegacy: React.FC<PartnerLandingLegacyProps> = ({ onLoginClick }) => {
+const PartnerLandingLegacy = () => {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-800">
 
@@ -21,12 +17,12 @@ const PartnerLandingLegacy: React.FC<PartnerLandingLegacyProps> = ({ onLoginClic
               </div>
               <span className="text-xl font-bold tracking-tight">LocalPlus Partners</span>
             </div>
-            <button
-              onClick={onLoginClick}
+            <a
+              href="/login"
               className="px-5 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all font-medium border border-white/10"
             >
               Partner Log In
-            </button>
+            </a>
           </nav>
 
           {/* Hero Content */}
@@ -42,9 +38,12 @@ const PartnerLandingLegacy: React.FC<PartnerLandingLegacyProps> = ({ onLoginClic
               <a href="#industries" className="px-8 py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold text-lg transition-all shadow-lg shadow-blue-500/30 text-center">
                 Explore Your Industry
               </a>
-              <button onClick={onLoginClick} className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold text-lg transition-all border border-white/10">
+              <a 
+                href="/login" 
+                className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold text-lg transition-all border border-white/10 text-center"
+              >
                 Partner Log In
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -243,9 +242,9 @@ const PartnerLandingLegacy: React.FC<PartnerLandingLegacyProps> = ({ onLoginClic
               </div>
             </div>
             <div className="mt-8">
-              <button onClick={onLoginClick} className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg shadow-orange-500/20 transition-all">
+              <a href="/login" className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold shadow-lg shadow-orange-500/20 transition-all text-center">
                 Get Started with Hospitality
-              </button>
+              </a>
             </div>
           </div>
 
@@ -358,7 +357,7 @@ const PartnerLandingLegacy: React.FC<PartnerLandingLegacyProps> = ({ onLoginClic
             <p className="text-slate-400 mb-6">Join thousands of local operators building better businesses with LocalPlus.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <a href="#industries" className="px-8 py-3 bg-white text-slate-900 rounded-lg font-bold hover:bg-blue-50 transition-colors">Select Your Industry</a>
-              <button onClick={onLoginClick} className="px-8 py-3 bg-transparent border border-white/30 text-white rounded-lg font-bold hover:bg-white/10 transition-colors">Partner Log In</button>
+              <a href="/login" className="px-8 py-3 bg-transparent border border-white/30 text-white rounded-lg font-bold hover:bg-white/10 transition-colors text-center">Partner Log In</a>
             </div>
           </div>
         </div>

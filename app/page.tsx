@@ -20,15 +20,10 @@ export default async function HomePage() {
     redirect('/dashboard')
   }
 
-  const handleLoginClick = async () => {
-    'use server'
-    redirect('/login')
-  }
-
   // Otherwise, show the faithful port of the original PartnerLanding.tsx
   return (
     <main className="w-full">
-      <PartnerLandingLegacy onLoginClick={handleLoginClick} />
+      <PartnerLandingLegacy />
     </main>
   )
 }
