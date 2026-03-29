@@ -1,11 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { PlatformHero } from "@/components/sections/PlatformHero"
-import { IndustryCardSection } from "@/components/sections/IndustryCardSection"
-import { PhilosophySection } from "@/components/sections/PhilosophySection"
-import { CTASection, Footer } from "@/components/sections/CTASection"
-import ExplainerNavbar from "@/components/ui/ExplainerNavbar"
+import PartnerLandingLegacy from './(landing)/components/PartnerLandingLegacy'
 
+/**
+ * Root Switcher (v1.4.0)
+ * 
+ * 1. Auth Logic: Logged-in partners are redirected to /dashboard.
+ * 2. Platform Reality: Logged-out visitors see the RESTORED GROUND TRUTH 
+ *    (Feb 8th Version: "The Operating System for Local Business").
+ * 
+ * This page replaces all Answer Engine / simulation-focused root overwrites.
+ */
 export default async function HomePage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -15,26 +20,15 @@ export default async function HomePage() {
     redirect('/dashboard')
   }
 
-  // Otherwise, show the True LocalPlus Platform Explainer (Macro Narrative)
-  // v1.3.3: Correct Platform vs Answer Engine separation.
+  const handleLoginClick = async () => {
+    'use server'
+    redirect('/login')
+  }
+
+  // Otherwise, show the faithful port of the original PartnerLanding.tsx
   return (
-    <main className="relative w-full overflow-x-hidden selection:bg-blue-500 selection:text-white">
-      <ExplainerNavbar />
-      
-      {/* 1. Platform-level Hero: The Operating System */}
-      <PlatformHero />
-
-      {/* 2. Industry-specific Modules: Restaurants, Home Services, Clinics, Events */}
-      <div id="industries">
-        <IndustryCardSection />
-      </div>
-
-      {/* 3. Platform Philosophy: Push vs Pull, Operational Reality */}
-      <PhilosophySection />
-      
-      {/* 4. Conversion and Footer */}
-      <CTASection />
-      <Footer />
+    <main className="w-full">
+      <PartnerLandingLegacy onLoginClick={handleLoginClick} />
     </main>
   )
 }
