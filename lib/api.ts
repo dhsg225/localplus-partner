@@ -45,6 +45,9 @@ export const eventsApi = {
     businessId?: string
     status?: string
     eventType?: string
+    search?: string
+    sortBy?: string
+    sortOrder?: string
     limit?: number
     offset?: number
   } = {}) {
@@ -57,15 +60,77 @@ export const eventsApi = {
     return apiRequest(`/api/events${query ? `?${query}` : ''}`)
   },
 
-  async createEvent(eventData: any) {
+  async getInstances(params: {
+    organizationId?: string
+    eventId?: string
+    status?: string
+    startDate?: string
+    endDate?: string
+    limit?: number
+    offset?: number
+  } = {}) {
+    const searchParams = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) searchParams.set(key, String(value))
+    })
+    
+    const query = searchParams.toString()
+    return apiRequest(`/api/event-instances${query ? `?${query}` : ''}`)
+  },
+
+  async createEvent(payload: { event: any, recurrence?: any, rsvp?: any }) {
     return apiRequest('/api/events', {
       method: 'POST',
-      body: JSON.stringify(eventData),
+      body: JSON.stringify(payload),
+    })
+  },
+
+  async updateEvent(payload: { id: string, event: any, recurrence?: any }) {
+    return apiRequest('/api/events', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  async deleteEvent(eventId: string) {
+    return apiRequest(`/api/events?id=${eventId}`, {
+      method: 'DELETE'
+    })
+  },
+
+  async createInstance(payload: { eventId: string, start_time: string, end_time: string, max_capacity?: number }) {
+    return apiRequest('/api/event-instances', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  async updateInstance(payload: { id: string, status?: string, max_capacity?: number }) {
+    return apiRequest('/api/event-instances', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  async getRegistrations(instanceId: string) {
+    return apiRequest(`/api/registrations?instanceId=${instanceId}`)
+  },
+
+  async updateRegistration(registrationId: string, status: string) {
+    return apiRequest('/api/registrations', {
+      method: 'PUT',
+      body: JSON.stringify({ participantId: registrationId, status })
     })
   },
 
   async getEvent(eventId: string) {
     return apiRequest(`/api/events/${eventId}`)
+  }
+}
+
+export const aiApi = {
+  async getDiscovery(organizationId: string) {
+    return apiRequest(`/api/ai/discovery?organizationId=${organizationId}`)
   }
 }
 
@@ -85,6 +150,27 @@ export const organizationApi = {
     return partners?.[0]?.business_id || null
   },
 
+  async getAllPartners(isSuperAdmin?: boolean) {
+    const supabase = createClient()
+    
+    let query = supabase
+      .from('partners')
+      .select('*')
+      .is('deleted_at', null)
+      .order('business_name', { ascending: true })
+
+    if (isSuperAdmin === false) {
+       const { data: { user } } = await supabase.auth.getUser()
+       if (user) {
+          query = query.eq('user_id', user.id)
+       }
+    }
+
+    const { data: partners, error } = await query
+    if (error) return []
+    return partners
+  },
+
   async checkPermissions() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -100,5 +186,13 @@ export const organizationApi = {
     return {
       isSuperAdmin: (roles?.length || 0) > 0
     }
+  },
+
+  async getStaff(organizationId: string) {
+    return apiRequest(`/api/staff?organizationId=${organizationId}`)
+  },
+
+  async getVenues(organizationId: string) {
+    return apiRequest(`/api/venues?organizationId=${organizationId}`)
   }
 }
