@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ExplainerPage from './explainer/page'
+import ExplainerNavbar from '@/components/ui/ExplainerNavbar'
 
 export default async function HomePage() {
   const supabase = createClient()
@@ -12,5 +13,10 @@ export default async function HomePage() {
   }
 
   // Otherwise, show the world-class explainer
-  return <ExplainerPage />
+  return (
+    <>
+      <ExplainerNavbar />
+      <ExplainerPage />
+    </>
+  )
 }
