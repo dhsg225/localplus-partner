@@ -1,7 +1,7 @@
 import { eventsApi, organizationApi } from '@/lib/api'
 import DashboardHeader from '@/components/DashboardHeader'
-import EventsList from './components/EventsList'
-import CreateEventButton from './components/CreateEventButton'
+import EventsList from '@/app/(dashboard)/events/components/EventsList'
+import CreateEventButton from '@/app/(dashboard)/events/components/CreateEventButton'
 
 export default async function EventsPage() {
   const { isSuperAdmin } = await organizationApi.checkPermissions()

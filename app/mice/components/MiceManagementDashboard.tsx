@@ -52,10 +52,34 @@ export default function MiceManagementDashboard() {
 
   if (!org) {
     return (
-      <div className="p-8 bg-red-50 border-2 border-dashed border-red-200 rounded-2xl text-center">
-        <AlertCircle className="text-red-600 mx-auto mb-4" size={48} />
-        <h2 className="text-xl font-black text-gray-900 mb-2">Unauthorized Access</h2>
-        <p className="text-gray-600 max-w-md mx-auto">We couldn't link your session to a MICE partner organization. Please ensure your account has the 'Partner' role assigned.</p>
+      <div className="p-12 bg-gray-50 border-2 border-dashed border-gray-200 rounded-[32px] text-center max-w-2xl mx-auto mt-12 animate-fade-in shadow-inner">
+        <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl border border-gray-100">
+           <Building2 className="text-red-600" size={32} />
+        </div>
+        <h2 className="text-2xl font-black text-gray-900 mb-2 italic">No organization linked.</h2>
+        <p className="text-gray-500 font-medium mb-10 italic">Your account is not currently associated with a partner business.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button 
+            onClick={async () => {
+               setLoading(true);
+               try {
+                 const newOrg = await miceService.createDefaultOrganization();
+                 setOrg(newOrg);
+               } catch (err: any) {
+                 alert("Failed to initialize: " + (err.message || "Permissions rejected."));
+               } finally {
+                 setLoading(false);
+               }
+            }}
+            className="px-8 py-4 bg-gray-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black active:scale-95 transition-all shadow-xl shadow-gray-200"
+          >
+            Create Organization
+          </button>
+          <button className="px-8 py-4 bg-white border border-gray-100 text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest cursor-not-allowed opacity-50">
+            Join (In Progress)
+          </button>
+        </div>
       </div>
     );
   }

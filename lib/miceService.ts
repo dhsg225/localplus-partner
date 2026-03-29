@@ -7,14 +7,70 @@ export const miceService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
+    // 1. Try to get org from metadata
+    let orgId = user.app_metadata?.org_id;
+    
+    // 2. Fallback: Search for any organization linked to this user in the 'partners' table
+    if (!orgId) {
+      const { data: partner } = await supabase
+        .from('partners')
+        .select('business_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+      
+      if (partner) {
+        orgId = partner.business_id;
+      }
+    }
+
+    if (!orgId) return null;
+
     const { data, error } = await supabase
       .from('core_organizations')
       .select('*')
-      .eq('id', user.app_metadata?.org_id) // Assuming org_id is in user metadata
+      .eq('id', orgId)
       .single();
 
     if (error) return null;
     return data;
+  },
+
+  // Temporary Dev Fix: Auto-link current user to a default org
+  async createDefaultOrganization(): Promise<CoreOrganization> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Create unique name
+    const orgName = `Dev Org - ${user.email?.split('@')[0]}`;
+    
+    // 1. Create Business
+    const { data: org, error: orgError } = await supabase
+      .from('core_organizations')
+      .insert({
+        name: orgName,
+        industry: 'MICE',
+        legacy_id: 'AUTO_INIT'
+      })
+      .select()
+      .single();
+    
+    if (orgError) throw orgError;
+
+    // 2. Link User in Partners table
+    const { error: partnerError } = await supabase
+      .from('partners')
+      .insert({
+        user_id: user.id,
+        business_id: org.id,
+        role: 'owner',
+        is_active: true
+      });
+
+    if (partnerError) throw partnerError;
+
+    return org;
   },
 
   async updateOrganization(id: string, updates: Partial<CoreOrganization>) {
