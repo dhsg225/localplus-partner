@@ -12,9 +12,9 @@ export default function ExplainerLayout({
   const pathname = usePathname()
 
   const navLinks = [
-    { href: "/explainer/consumers", label: "Consumers", icon: "👤" },
-    { href: "/explainer/businesses", label: "Businesses", icon: "🏪" },
-    { href: "/explainer/tech", label: "How It Works", icon: "⚙️" },
+    { href: "/answer-engine", label: "Consumers", icon: "👤" },
+    { href: "/answer-engine/businesses", label: "Businesses", icon: "🏪" },
+    { href: "/answer-engine/tech", label: "How It Works", icon: "⚙️" },
   ]
 
   const placeholders = [

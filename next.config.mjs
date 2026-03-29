@@ -7,6 +7,15 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async redirects() {
+    return [
+      {
+        source: '/explainer/:path*',
+        destination: '/answer-engine/:path*',
+        permanent: true,
+      },
+    ]
+  },
 };
 
 export default nextConfig;

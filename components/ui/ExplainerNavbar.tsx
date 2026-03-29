@@ -13,12 +13,10 @@ export default function ExplainerNavbar() {
         </div>
         
         <div className="hidden lg:flex items-center space-x-8">
-           <a href="#" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Platform</a>
-           <a href="#" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Solutions</a>
-           <a href="#" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Pricing</a>
+           <a href="#platform" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Platform</a>
+           <a href="#solutions" className="text-[10px] font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Pricing</a>
            <div className="h-4 w-[1px] bg-gray-200 mx-2" />
-           <a href="/explainer/consumers" className="text-xs font-bold text-gray-900 hover:opacity-70 transition-opacity uppercase tracking-widest">For Consumers</a>
-           <a href="/explainer/businesses" className="text-xs font-bold text-gray-900 hover:opacity-70 transition-opacity uppercase tracking-widest">For Businesses</a>
+           <a href="/answer-engine" className="text-xs font-black text-blue-600 hover:text-gray-900 transition-colors uppercase tracking-widest bg-blue-50 px-4 py-1.5 rounded-full shadow-sm">Answer Engine Simulation</a>
         </div>
 
         <div className="flex items-center space-x-4">
