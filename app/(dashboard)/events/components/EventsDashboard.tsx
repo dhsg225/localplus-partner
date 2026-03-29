@@ -231,12 +231,14 @@ export default function EventsDashboard({
                       <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Date & Time</th>
                       <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Category</th>
                       <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Status</th>
+                      <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Location</th>
+                      <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Organizer</th>
                       <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest italic text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {events.map(event => (
-                      <tr key={event.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
+                      <tr key={event.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group text-[11px]">
                         <td className="p-6">
                            <input type="checkbox" checked={selectedEvents.includes(event.id)} onChange={() => toggleSelect(event.id)} className="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500" />
                         </td>
@@ -246,14 +248,14 @@ export default function EventsDashboard({
                               <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter mt-1">{event.id.slice(0,8)}...</span>
                            </div>
                         </td>
-                        <td className="p-6 text-[11px] font-bold text-gray-600">
+                        <td className="p-6 font-bold text-gray-600">
                            {new Date(event.start_time).toLocaleDateString()}. {new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </td>
                         <td className="p-6">
-                           <div className="flex space-x-1">
-                              {event.categories?.map((c: string) => (
-                                <span key={c} className="px-2 py-0.5 bg-red-50 text-red-500 text-[8px] font-black uppercase rounded-lg border border-red-100">{c}</span>
-                              ))}
+                           <div className="flex flex-wrap gap-1">
+                              {(event.eventType || event.categories)?.split(',').map((c: string) => (
+                                <span key={c} className="px-2 py-0.5 bg-red-50 text-red-500 text-[8px] font-black uppercase rounded-lg border border-red-100">{c.trim()}</span>
+                              )) || <span className="text-gray-300 italic opacity-50">Uncategorized</span>}
                            </div>
                         </td>
                         <td className="p-6">
@@ -263,6 +265,12 @@ export default function EventsDashboard({
                            )}>
                              {event.status}
                            </span>
+                        </td>
+                        <td className="p-6 font-bold text-gray-500 italic">
+                           {event.venue_name || '—'}
+                        </td>
+                        <td className="p-6 font-bold text-gray-500 italic">
+                           {event.organization_name || '—'}
                         </td>
                         <td className="p-6 text-right">
                            <div className="flex items-center justify-end space-x-2">
