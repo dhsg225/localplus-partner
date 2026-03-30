@@ -202,7 +202,7 @@ export default function Sidebar({ user }: { user: any }) {
                       key={p.name}
                       onClick={() => handlePerspectiveChange(p.name)}
                       className={cn(
-                        "w-full flex items-center space-x-4 px-3 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wide transition-all",
+                        "w-full flex items-center space-x-4 px-3 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wide transition-all text-left",
                         isActive ? "bg-red-50 text-red-600 italic" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                       )}
                     >
