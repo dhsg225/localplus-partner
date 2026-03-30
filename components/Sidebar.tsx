@@ -41,6 +41,9 @@ const navItems = [
       { name: 'Tactics & Taxonomy', href: '/events/taxonomy', icon: Settings2 },
       { name: 'Live Venues', href: '/events/venues', icon: Home },
       { name: 'Service Rosters', href: '/events/staff', icon: Briefcase },
+      { name: 'Tickets & Sales', href: '/events/tickets', icon: Star },
+      { name: 'Strategy Reviews', href: '/events/reviews', icon: TrendingUp },
+      { name: 'System Notifications', href: '/events/notifications', icon: Megaphone },
     ]
   },
   { name: 'MICE Cloud', href: '/mice', icon: MapPin },
