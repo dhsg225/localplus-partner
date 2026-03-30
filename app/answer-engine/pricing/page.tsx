@@ -85,11 +85,11 @@ export default function PricingPage() {
            className="space-y-4"
         >
           <h1 className="text-5xl md:text-8xl font-black text-gray-900 italic tracking-tighter leading-[0.85] font-heading max-w-5xl mx-auto">
-            Be Recommended <br/> 
-            <span className="text-blue-600 not-italic">By AI — Not Just Listed</span>
+            Don’t Run Ads. <br/> 
+            <span className="text-blue-600 not-italic">Let AI Bring You Customers.</span>
           </h1>
           <p className="max-w-2xl mx-auto text-xl md:text-2xl text-gray-400 font-bold tracking-tight leading-tight">
-            LocalPlus helps AI understand and promote your business to <span className="text-gray-900">customers actively searching nearby.</span>
+            Stop fighting with complicated ad managers. LocalPlus turns your business <span className="text-gray-900">into a recommendation, not just a link.</span>
           </p>
           <p className="text-blue-500 italic uppercase tracking-[0.2em] text-[10px] font-black animate-pulse">
             The more context you provide, the more confidently AI recommends you.
