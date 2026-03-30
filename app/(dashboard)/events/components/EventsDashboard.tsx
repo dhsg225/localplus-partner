@@ -16,7 +16,8 @@ import {
   Copy, 
   Trash2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  ChevronDown
 } from 'lucide-react'
 import { eventsApi } from '@/lib/api'
 import { useRouter } from 'next/navigation'
@@ -152,13 +153,37 @@ export default function EventsDashboard({
            </button>
         </div>
 
-        <button 
-          onClick={() => setShowCreate(true)}
-          className="px-8 py-4 bg-red-500 text-white rounded-[24px] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-105 active:scale-95 transition-all flex items-center space-x-3"
-        >
-           <Plus size={18} />
-           <span>Create Execution Strategy</span>
-        </button>
+        <div className="relative group">
+           <button 
+             className="px-8 py-4 bg-red-500 text-white rounded-[24px] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-105 active:scale-95 transition-all flex items-center space-x-3"
+           >
+              <Plus size={18} />
+              <span>Create Operation</span>
+              <ChevronDown size={14} className="ml-2 group-hover:rotate-180 transition-transform" />
+           </button>
+           
+           <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-100 rounded-[24px] shadow-2xl p-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] scale-95 group-hover:scale-100 origin-top-right">
+              <button 
+                onClick={() => setShowCreate(true)}
+                className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 text-gray-700 hover:text-red-500 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider"
+              >
+                 <Calendar size={16} />
+                 <span>Create Strategy</span>
+              </button>
+              <button 
+                className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 text-gray-400 cursor-not-allowed rounded-xl transition-all text-[10px] font-black uppercase tracking-wider"
+              >
+                 <User size={16} />
+                 <span>Create Organiser</span>
+              </button>
+              <button 
+                className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 text-gray-400 cursor-not-allowed rounded-xl transition-all text-[10px] font-black uppercase tracking-wider"
+              >
+                 <MapPin size={16} />
+                 <span>Create Location</span>
+              </button>
+           </div>
+        </div>
       </div>
 
       {/* Filter Matrix */}
