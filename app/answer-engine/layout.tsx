@@ -76,7 +76,7 @@ export default function ExplainerLayout({
 
       {/* Version Marker - v0.4.7 */}
       <div className="fixed bottom-6 right-8 z-[150] pointer-events-none opacity-80">
-         <p className="text-[10px] font-mono font-black text-gray-400 uppercase tracking-[0.3em] bg-white/50 backdrop-blur-sm px-3 py-2 rounded-lg border border-gray-100 shadow-sm">Build v0.4.7 (simulation_env)</p>
+         <p className="text-[10px] font-mono font-black text-gray-400 uppercase tracking-[0.3em] bg-white/50 backdrop-blur-sm px-3 py-2 rounded-lg border border-gray-100 shadow-sm">Build v0.5.1 (simulation_env)</p>
       </div>
     </div>
   )
