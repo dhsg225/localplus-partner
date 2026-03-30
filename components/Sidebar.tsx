@@ -28,7 +28,8 @@ import {
   Globe,
   Wrench,
   Bell,
-  MessageSquare
+  User,
+  Plus
 } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -47,12 +48,13 @@ interface NavItem {
   perspectives?: Perspective[]
   subItems?: NavItem[]
   isEmoji?: boolean
+  isAction?: boolean
 }
 
 const navItems: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'DASHBOARD', href: '/dashboard', icon: LayoutDashboard },
   { 
-    name: 'Events', 
+    name: 'EVENTS', 
     href: '/events', 
     icon: () => <span className="text-lg">🎟️</span>,
     perspectives: ['Global', 'Event Organizer', 'Activities', 'Attractions'],
@@ -62,34 +64,38 @@ const navItems: NavItem[] = [
       { name: 'TACTICS & TAXONOMY', href: '/events/taxonomy', icon: Settings2 },
       { name: 'LIVE VENUES', href: '/events/venues', icon: Home },
       { name: 'SERVICE ROSTERS', href: '/events/staff', icon: Briefcase },
+      { name: '---', href: '#', icon: () => <div className="h-[1px] w-full bg-gray-50 my-1" />, isAction: true },
+      { name: 'CREATE STRATEGY', href: '/events?action=create-strategy', icon: Calendar, isAction: true },
+      { name: 'CREATE ORGANISER', href: '/events?action=create-organiser', icon: User, isAction: true },
+      { name: 'CREATE LOCATION', href: '/events?action=create-location', icon: MapPin, isAction: true },
     ]
   },
   { 
-    name: 'Tickets', 
+    name: 'TICKETS', 
     href: '/events/tickets', 
     icon: () => <span className="text-lg">🎫</span>, 
     perspectives: ['Global', 'Event Organizer'],
     isEmoji: true
   },
   { 
-    name: 'Reviews', 
+    name: 'REVIEWS', 
     href: '/events/reviews', 
     icon: () => <span className="text-lg">⭐</span>, 
     perspectives: ['Global', 'Event Organizer', 'Restaurant', 'Hotel'],
     isEmoji: true
   },
   { 
-    name: 'Notifications', 
+    name: 'NOTIFICATIONS', 
     href: '/events/notifications', 
     icon: () => <span className="text-lg">🔔</span>, 
     perspectives: ['Global', 'Event Organizer'],
     isEmoji: true
   },
-  { name: 'MICE Cloud', href: '/mice', icon: MapPin, perspectives: ['Global', 'Event Organizer'] },
-  { name: 'Business Data', href: '/business', icon: Building2 },
-  { name: 'Loyalty', href: '/loyalty', icon: Star, perspectives: ['Global', 'Restaurant', 'Hotel', 'Activities'] },
-  { name: 'Advertising', href: '/advertising', icon: Megaphone },
-  { name: 'Analytics', href: '/analytics', icon: TrendingUp },
+  { name: 'MICE CLOUD', href: '/mice', icon: Globe, perspectives: ['Global', 'Event Organizer'] },
+  { name: 'BUSINESS DATA', href: '/business', icon: Building2 },
+  { name: 'LOYALTY', href: '/loyalty', icon: Star, perspectives: ['Global', 'Restaurant', 'Hotel', 'Activities'] },
+  { name: 'ADVERTISING', href: '/advertising', icon: Megaphone },
+  { name: 'ANALYTICS', href: '/analytics', icon: TrendingUp },
 ]
 
 const perspectives: { name: Perspective; icon: any; color: string }[] = [
@@ -106,7 +112,7 @@ export default function Sidebar({ user }: { user: any }) {
   const pathname = usePathname()
   const supabase = createClient()
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [expandedItems, setExpandedItems] = useState<string[]>(['Events'])
+  const [expandedItems, setExpandedItems] = useState<string[]>(['EVENTS'])
   const [activePerspective, setActivePerspective] = useState<Perspective>('Global')
   const [showPerspectivePicker, setShowPerspectivePicker] = useState(false)
 
@@ -193,7 +199,7 @@ export default function Sidebar({ user }: { user: any }) {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Select Operational Perspective</p>
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
              </div>
-             <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
+             <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1 scrollbar-hide">
                 {perspectives.map(p => {
                   const Icon = p.icon
                   const isActive = activePerspective === p.name
@@ -274,20 +280,28 @@ export default function Sidebar({ user }: { user: any }) {
               {/* Sub Items */}
               {hasSubItems && isExpanded && !isCollapsed && (
                 <div className="ml-8 pl-6 border-l-2 border-gray-50 space-y-1 animate-in slide-in-from-top-2">
-                   {item.subItems.map(subItem => {
+                   {item.subItems?.map(subItem => {
+                     if (subItem.name === '---') return <div key={subItem.name} className="h-[1px] w-full bg-gray-50 my-2" />
+                     
                      const isSubActive = pathname === subItem.href
+                     const isCreationAction = subItem.isAction
                      const SubIcon = subItem.icon
                      return (
                        <Link
                          key={subItem.name}
                          href={subItem.href}
                          className={cn(
-                           "flex items-center space-x-3 px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                           isSubActive ? "text-red-600 italic bg-red-50" : "text-gray-400 hover:text-gray-700 hover:translate-x-1"
+                           "flex items-center space-x-3 px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative group",
+                           isSubActive ? "text-red-600 italic bg-red-50" : "text-gray-400 hover:text-gray-700 hover:translate-x-1",
+                           isCreationAction && "text-gray-900 hover:text-red-600"
                          )}
                        >
-                         <SubIcon size={14} className={isSubActive ? "text-red-600" : "text-gray-300"} />
+                         {typeof SubIcon === 'function' ? <SubIcon /> : <SubIcon size={14} className={cn(
+                           isSubActive ? "text-red-600" : "text-gray-300 group-hover:text-red-500",
+                           isCreationAction && "text-gray-600 group-hover:text-red-600"
+                         )} />}
                          <span>{subItem.name}</span>
+                         {isCreationAction && <Plus size={8} className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity" />}
                        </Link>
                      )
                    })}

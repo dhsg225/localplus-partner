@@ -20,7 +20,7 @@ import {
   ChevronDown
 } from 'lucide-react'
 import { eventsApi } from '@/lib/api'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import CreateEventModal from './CreateEventModal'
 import EditEventModal from './EditEventModal'
 import CreateOrganizerModal from './CreateOrganizerModal'
@@ -90,6 +90,23 @@ export default function EventsDashboard({
     e.preventDefault()
     loadEvents()
   }
+
+  const searchParams = useSearchParams()
+
+  // Handle Sidebar creation actions via query params
+  useEffect(() => {
+    const action = searchParams.get('action')
+    if (action === 'create-strategy') {
+      setShowCreate(true)
+      router.push('/events', { scroll: false })
+    } else if (action === 'create-organiser') {
+      setShowCreateOrganizer(true)
+      router.push('/events', { scroll: false })
+    } else if (action === 'create-location') {
+      setShowCreateLocation(true)
+      router.push('/events', { scroll: false })
+    }
+  }, [searchParams, router])
 
   const toggleSelectAll = () => {
     if (selectedEvents.length === events.length) {
