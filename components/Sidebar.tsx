@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
@@ -20,7 +20,13 @@ import {
   Settings2,
   Home,
   Briefcase,
-  Layers
+  Layers,
+  Utensils,
+  Bed,
+  Activity,
+  Ticket,
+  Globe,
+  Wrench
 } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -30,12 +36,23 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-const navItems = [
+type Perspective = 'Global' | 'Restaurant' | 'Hotel' | 'Event Organizer' | 'Service Provider' | 'Activities' | 'Attractions'
+
+interface NavItem {
+  name: string
+  href: string
+  icon: any
+  perspectives?: Perspective[]
+  subItems?: NavItem[]
+}
+
+const navItems: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { 
     name: 'Events', 
     href: '/events', 
     icon: Calendar,
+    perspectives: ['Global', 'Event Organizer', 'Activities', 'Attractions'],
     subItems: [
       { name: 'Strategy Hub', href: '/events', icon: Layers },
       { name: 'Tactics & Taxonomy', href: '/events/taxonomy', icon: Settings2 },
@@ -46,11 +63,21 @@ const navItems = [
       { name: 'System Notifications', href: '/events/notifications', icon: Megaphone },
     ]
   },
-  { name: 'MICE Cloud', href: '/mice', icon: MapPin },
+  { name: 'MICE Cloud', href: '/mice', icon: MapPin, perspectives: ['Global', 'Event Organizer'] },
   { name: 'Business Data', href: '/business', icon: Building2 },
-  { name: 'Loyalty', href: '/loyalty', icon: Star },
+  { name: 'Loyalty', href: '/loyalty', icon: Star, perspectives: ['Global', 'Restaurant', 'Hotel', 'Activities'] },
   { name: 'Advertising', href: '/advertising', icon: Megaphone },
   { name: 'Analytics', href: '/analytics', icon: TrendingUp },
+]
+
+const perspectives: { name: Perspective; icon: any; color: string }[] = [
+  { name: 'Global', icon: Globe, color: 'bg-blue-600' },
+  { name: 'Restaurant', icon: Utensils, color: 'bg-orange-500' },
+  { name: 'Hotel', icon: Bed, color: 'bg-indigo-600' },
+  { name: 'Event Organizer', icon: Calendar, color: 'bg-red-600' },
+  { name: 'Service Provider', icon: Wrench, color: 'bg-gray-700' },
+  { name: 'Activities', icon: Activity, color: 'bg-green-600' },
+  { name: 'Attractions', icon: Ticket, color: 'bg-purple-600' },
 ]
 
 export default function Sidebar({ user }: { user: any }) {
@@ -58,6 +85,23 @@ export default function Sidebar({ user }: { user: any }) {
   const supabase = createClient()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [expandedItems, setExpandedItems] = useState<string[]>(['Events'])
+  const [activePerspective, setActivePerspective] = useState<Perspective>('Global')
+  const [showPerspectivePicker, setShowPerspectivePicker] = useState(false)
+
+  // Load perspective preference
+  useEffect(() => {
+    const saved = localStorage.getItem('lp_active_perspective') as Perspective
+    if (saved && perspectives.some(p => p.name === saved)) {
+      setActivePerspective(saved)
+    }
+  }, [])
+
+  // Save perspective preference
+  const handlePerspectiveChange = (p: Perspective) => {
+    setActivePerspective(p)
+    localStorage.setItem('lp_active_perspective', p)
+    setShowPerspectivePicker(false)
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -69,6 +113,14 @@ export default function Sidebar({ user }: { user: any }) {
       prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]
     )
   }
+
+  const currentPerspective = perspectives.find(p => p.name === activePerspective) || perspectives[0]
+  const PerspectiveIcon = currentPerspective.icon
+
+  // Filter items based on active perspective
+  const filteredNavItems = navItems.filter(item => 
+    !item.perspectives || item.perspectives.includes(activePerspective)
+  )
 
   return (
     <aside className={cn(
@@ -83,26 +135,67 @@ export default function Sidebar({ user }: { user: any }) {
         {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
 
-      {/* Header */}
+      {/* Header & Perspective Switcher */}
       <div className={cn(
-        "p-6 border-b border-gray-100 h-[88px] flex items-center overflow-hidden",
-        isCollapsed ? "justify-center" : "justify-start"
+        "p-6 border-b border-gray-100 flex flex-col transition-all overflow-hidden relative",
+        isCollapsed ? "items-center" : "items-start"
       )}>
-        <div className="flex items-center space-x-2 shrink-0">
-          <div className="bg-red-600 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-lg shadow-red-500/20">
-            <span className="text-white font-black text-lg">P</span>
+        <button 
+          onClick={() => !isCollapsed && setShowPerspectivePicker(!showPerspectivePicker)}
+          className={cn(
+            "flex items-center space-x-3 w-full group transition-all rounded-xl",
+            !isCollapsed && "hover:bg-gray-50 p-2 -m-2"
+          )}
+        >
+          <div className={cn(
+            "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-lg transition-transform group-hover:scale-105",
+            currentPerspective.color
+          )}>
+            <PerspectiveIcon size={20} className="text-white" />
           </div>
           {!isCollapsed && (
-            <span className="font-outfit font-black text-xl tracking-tight text-gray-900 animate-in fade-in slide-in-from-left-2">
-              LocalPlus Partner
-            </span>
+            <div className="flex-1 text-left">
+              <span className="block font-outfit font-black text-sm tracking-tight text-gray-900 leading-none mb-1 animate-in fade-in slide-in-from-left-2">
+                {activePerspective}
+              </span>
+              <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">Operational View</span>
+            </div>
           )}
-        </div>
+          {!isCollapsed && <ChevronDown size={14} className={cn("text-gray-400 transition-transform", showPerspectivePicker && "rotate-180")} />}
+        </button>
+
+        {/* Perspective Picker Overlay */}
+        {showPerspectivePicker && !isCollapsed && (
+          <div className="absolute top-[80px] left-4 right-4 bg-white border border-gray-100 rounded-2xl shadow-2xl z-[100] p-2 animate-in zoom-in-95 duration-200">
+             <p className="px-3 py-2 text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Switch Perspective</p>
+             <div className="space-y-1">
+                {perspectives.map(p => {
+                  const Icon = p.icon
+                  const isActive = activePerspective === p.name
+                  return (
+                    <button
+                      key={p.name}
+                      onClick={() => handlePerspectiveChange(p.name)}
+                      className={cn(
+                        "w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-[11px] font-bold transition-all",
+                        isActive ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                      )}
+                    >
+                      <div className={cn("p-1.5 rounded-lg text-white shadow-sm", p.color)}>
+                        <Icon size={14} />
+                      </div>
+                      <span className={isActive ? "font-black italic" : ""}>{p.name}</span>
+                    </button>
+                  )
+                })}
+             </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-        {navItems.map((item) => {
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
+        {filteredNavItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
           const isExpanded = expandedItems.includes(item.name)
           const Icon = item.icon
@@ -186,7 +279,7 @@ export default function Sidebar({ user }: { user: any }) {
               </div>
               <div className="flex-1 truncate">
                 <p className="text-[11px] font-black text-gray-900 truncate italic">{user.email}</p>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">OS v7.0.0 Partner</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Partner OS {activePerspective}</p>
               </div>
             </div>
           </div>
