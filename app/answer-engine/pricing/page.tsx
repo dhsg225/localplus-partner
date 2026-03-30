@@ -204,6 +204,80 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* Comparison Section: Us vs. Them */}
+      <section className="py-24 px-6 bg-gray-50/30 border-y border-gray-100">
+        <div className="max-w-5xl mx-auto space-y-16">
+          <div className="text-center space-y-4">
+            <h2 className="text-4xl md:text-6xl font-black italic tracking-tighter text-gray-900 leading-tight">
+              Like Ads. <br className="md:hidden" />
+              <span className="text-blue-600 not-italic">But way easier.</span>
+            </h2>
+            <p className="text-xl text-gray-400 font-bold max-w-2xl mx-auto">
+              Stop fighting with complicated ad managers. LocalPlus gives you the results of advertising without the headache.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-px bg-gray-200 rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-2xl">
+            {/* Traditional Ads */}
+            <div className="bg-white p-10 md:p-14 space-y-8">
+              <div className="space-y-2">
+                <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 grayscale">
+                   <Zap size={24} />
+                </div>
+                <h3 className="text-2xl font-black text-gray-300 italic">Traditional Ads</h3>
+                <p className="text-xs font-black uppercase tracking-widest text-gray-400">Google & Facebook</p>
+              </div>
+
+              <div className="space-y-6">
+                {[
+                  { label: "Management", value: "Daily monitoring & tweaking required", bad: true },
+                  { label: "Setup", value: "Complex keywords, audiences & bids", bad: true },
+                  { label: "Cost", value: "Unpredictable. Easy to overspend.", bad: true },
+                  { label: "Result", value: "Just a link in a list of results", bad: true }
+                ].map((item, i) => (
+                  <div key={i} className="space-y-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{item.label}</p>
+                    <p className="text-sm font-bold text-gray-400 line-through decoration-red-500/30">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* LocalPlus */}
+            <div className="bg-gray-900 p-10 md:p-14 space-y-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                 <Zap size={160} className="text-orange-500 fill-current" />
+              </div>
+
+              <div className="space-y-2 relative z-10">
+                <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+                   <Zap size={24} className="fill-current" />
+                </div>
+                <h3 className="text-2xl font-black text-white italic">The LocalPlus Way</h3>
+                <p className="text-xs font-black uppercase tracking-widest text-orange-500">Pure Grounded AI</p>
+              </div>
+
+              <div className="space-y-6 relative z-10">
+                {[
+                  { label: "Management", value: "Zero. AI handles everything.", good: true },
+                  { label: "Setup", value: "Instant. No keywords or bidding.", good: true },
+                  { label: "Cost", value: "Fixed monthly. Completely predictable.", good: true },
+                  { label: "Result", value: "A direct, active recommendation.", good: true }
+                ].map((item, i) => (
+                  <div key={i} className="space-y-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">{item.label}</p>
+                    <div className="flex items-center space-x-2">
+                       <Check size={14} className="text-orange-500" />
+                       <p className="text-sm font-bold text-white">{item.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 3. HOW IT WORKS SECTION */}
       <section className="py-24 bg-gray-50/50 border-y border-gray-100 px-6">
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-16 items-center">
