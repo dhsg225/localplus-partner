@@ -125,6 +125,20 @@ export const eventsApi = {
 
   async getEvent(eventId: string) {
     return apiRequest(`/api/events/${eventId}`)
+  },
+  
+  async createOrganizer(payload: { name: string, description?: string, contact?: string, address?: string }) {
+    return apiRequest('/api/organizers', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+  },
+
+  async createLocation(payload: { name: string, address?: string, latitude?: number, longitude?: number, business_id: string }) {
+    return apiRequest('/api/locations', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
   }
 }
 

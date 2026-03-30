@@ -23,6 +23,8 @@ import { eventsApi } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import CreateEventModal from './CreateEventModal'
 import EditEventModal from './EditEventModal'
+import CreateOrganizerModal from './CreateOrganizerModal'
+import CreateLocationModal from './CreateLocationModal'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -53,6 +55,8 @@ export default function EventsDashboard({
   
   // Modals
   const [showCreate, setShowCreate] = useState(false)
+  const [showCreateOrganizer, setShowCreateOrganizer] = useState(false)
+  const [showCreateLocation, setShowCreateLocation] = useState(false)
   const [editingEvent, setEditingEvent] = useState<any>(null)
 
   const loadEvents = async () => {
@@ -171,13 +175,15 @@ export default function EventsDashboard({
                  <span>Create Strategy</span>
               </button>
               <button 
-                className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 text-gray-400 cursor-not-allowed rounded-xl transition-all text-[10px] font-black uppercase tracking-wider"
+                onClick={() => setShowCreateOrganizer(true)}
+                className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 text-gray-700 hover:text-red-500 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider"
               >
                  <User size={16} />
                  <span>Create Organiser</span>
               </button>
               <button 
-                className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 text-gray-400 cursor-not-allowed rounded-xl transition-all text-[10px] font-black uppercase tracking-wider"
+                onClick={() => setShowCreateLocation(true)}
+                className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 text-gray-700 hover:text-red-500 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider"
               >
                  <MapPin size={16} />
                  <span>Create Location</span>
@@ -367,6 +373,28 @@ export default function EventsDashboard({
          <CreateEventModal 
            organizationId={organizationId} 
            onClose={() => setShowCreate(false)} 
+         />
+      )}
+
+      {showCreateOrganizer && (
+         <CreateOrganizerModal 
+           organizationId={organizationId} 
+           onClose={() => setShowCreateOrganizer(false)} 
+           onSuccess={() => {
+             setShowCreateOrganizer(false)
+             loadEvents()
+           }}
+         />
+      )}
+
+      {showCreateLocation && (
+         <CreateLocationModal 
+           organizationId={organizationId} 
+           onClose={() => setShowCreateLocation(false)} 
+           onSuccess={() => {
+             setShowCreateLocation(false)
+             loadEvents()
+           }}
          />
       )}
 
