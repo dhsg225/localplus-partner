@@ -159,7 +159,7 @@ export default function Sidebar({ user }: { user: any }) {
 
       {/* Header & Perspective Switcher */}
       <div className={cn(
-        "p-6 border-b border-gray-100 flex flex-col transition-all overflow-hidden relative",
+        "p-6 border-b border-gray-100 flex flex-col transition-all relative z-[100]",
         isCollapsed ? "justify-center p-4 h-[88px]" : "items-start h-[160px] justify-center"
       )}>
         <button 
