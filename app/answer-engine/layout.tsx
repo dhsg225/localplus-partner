@@ -15,12 +15,12 @@ export default function ExplainerLayout({
     { href: "/answer-engine", label: "Consumers", icon: "👤" },
     { href: "/answer-engine/businesses", label: "Businesses", icon: "🏪" },
     { href: "/answer-engine/tech", label: "How It Works", icon: "⚙️" },
+    { href: "/answer-engine/pricing", label: "Pricing", icon: "🏷️" },
   ]
 
   const placeholders = [
     { label: "Platform" },
     { label: "Solutions" },
-    { label: "Pricing" },
   ]
 
   return (
