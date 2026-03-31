@@ -196,3 +196,41 @@ export const organizationApi = {
     return apiRequest(`/api/venues?organizationId=${organizationId}`)
   }
 }
+
+export const ingestionApi = {
+  async getBatches(organizationId: string) {
+    return apiRequest(`/api/data-ingest?endpoint=batches&organizationId=${organizationId}`)
+  },
+
+  async getBatchQueue(batchId: string) {
+    return apiRequest(`/api/data-ingest?endpoint=queue&batchId=${batchId}`)
+  },
+
+  async parseContent(payload: { organization_id: string, source_name: string, raw_content: string, global_date?: string }) {
+    return apiRequest('/api/data-ingest', {
+      method: 'POST',
+      body: JSON.stringify({ ...payload, endpoint: 'parse' })
+    })
+  },
+
+  async updateRow(id: string, updates: any) {
+    return apiRequest('/api/data-ingest', {
+      method: 'PUT',
+      body: JSON.stringify({ endpoint: 'update-row', id, updates })
+    })
+  },
+
+  async commitBatch(batchId: string) {
+    return apiRequest('/api/data-ingest', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint: 'commit', batchId })
+    })
+  },
+
+  async rollbackBatch(batchId: string) {
+    return apiRequest('/api/data-ingest', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint: 'rollback', batchId })
+    })
+  }
+}
