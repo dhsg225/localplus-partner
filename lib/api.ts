@@ -225,3 +225,61 @@ export const organizationApi = {
     return apiRequest(`/api/venues?organizationId=${organizationId}`)
   }
 }
+
+export const bookingsApi = {
+  async getBookings(params: { status?: string; limit?: number; offset?: number } = {}) {
+    const searchParams = new URLSearchParams()
+    if (params.status) searchParams.set('status', params.status)
+    if (params.limit) searchParams.set('limit', String(params.limit))
+    if (params.offset) searchParams.set('offset', String(params.offset))
+    const query = searchParams.toString()
+    return apiRequest(`/api/bookings${query ? `?${query}` : ''}`)
+  },
+
+  async createBooking(payload: {
+    customer_name: string
+    customer_email: string
+    customer_phone: string
+    party_size: number
+    booking_date: string
+    booking_time: string
+    special_requests?: string
+  }) {
+    return apiRequest('/api/bookings', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+  },
+
+  async confirmBooking(id: string) {
+    return apiRequest(`/api/bookings/${id}/confirm`, { method: 'PUT' })
+  },
+
+  async cancelBooking(id: string, reason?: string) {
+    return apiRequest(`/api/bookings/${id}/cancel`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason })
+    })
+  },
+
+  async seatBooking(id: string) {
+    return apiRequest(`/api/bookings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'seated', seated_at: new Date().toISOString() })
+    })
+  },
+
+  async completeBooking(id: string) {
+    return apiRequest(`/api/bookings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'completed', completed_at: new Date().toISOString() })
+    })
+  },
+
+  async markNoShow(id: string) {
+    return apiRequest(`/api/bookings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'no_show' })
+    })
+  }
+}

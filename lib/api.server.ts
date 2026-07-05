@@ -367,6 +367,20 @@ export const organizationApi = {
   }
 }
 
+export const bookingsApi = {
+  async getBookings(params: { status?: string; limit?: number; offset?: number } = {}) {
+    const businessId = await getBusinessIdForCurrentUser()
+    if (!businessId) return { success: true, data: [], pagination: { limit: 50, offset: 0, total: 0 } }
+
+    const searchParams = new URLSearchParams({ businessId })
+    if (params.status) searchParams.set('status', params.status)
+    if (params.limit) searchParams.set('limit', String(params.limit))
+    if (params.offset) searchParams.set('offset', String(params.offset))
+
+    return apiRequest(`/api/bookings?${searchParams.toString()}`)
+  }
+}
+
 export const ingestionApi = {
   async getBatches(organizationId: string) {
     return apiRequest(`/api/data-ingest?endpoint=batches&organizationId=${organizationId}`)

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   Building2,
   Calendar,
+  CalendarCheck,
   TrendingUp,
   Megaphone,
   Star,
@@ -89,6 +90,7 @@ const navItems: NavItem[] = [
   },
   { name: 'MICE CLOUD', href: '/mice', icon: Globe, perspectives: ['Global', 'Event Organizer'], section: 'Events' },
   { name: 'BUSINESS DATA', href: '/business/profile', icon: Building2, section: 'Business' },
+  { name: 'BOOKINGS', href: '/bookings', icon: CalendarCheck, perspectives: ['Global', 'Restaurant', 'Hotel'], section: 'Business' },
   { name: 'LOYALTY', href: '/loyalty', icon: Star, perspectives: ['Global', 'Restaurant', 'Hotel', 'Activities'], section: 'Business' },
   { name: 'ADVERTISING', href: '/advertising', icon: Megaphone, section: 'Business' },
   { name: 'ANALYTICS', href: '/analytics', icon: TrendingUp, section: 'Business' },
