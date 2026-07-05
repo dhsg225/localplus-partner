@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Check, X, Split, Layers, RotateCcw, AlertTriangle, Play, ChevronRight, LayoutGrid, LayoutList } from 'lucide-react'
 
 // Mock Ingestion Batch interface
@@ -101,10 +101,38 @@ const IngestionDashboard = ({ organizationId, initialBatches }: { organizationId
   // 2. Action Handlers (Phase I2 Mechanics)
   const handleUpdate = async (id: string, updates: Partial<QueueItem>) => {
     setQueue(prev => prev.map(q => q.id === id ? { ...q, ...updates } : q))
+    try {
+      await fetch('/api/data-ingest', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: 'update-row', id, updates })
+      })
+    } catch (err: any) {
+      alert(`Failed to save: ${err.message}`)
+    }
   }
 
   const handleApprove = (id: string) => handleUpdate(id, { validation_status: 'approved' })
   const handleReject = (id: string) => handleUpdate(id, { validation_status: 'rejected' })
+
+  // 2b. Receive a draft batch pushed in from the LocalPlus Event Capture extension
+  const receiveExtensionDraft = useCallback((event: MessageEvent) => {
+    if (event.origin !== window.location.origin) return
+    if (event.data?.type !== 'LOCALPLUS_INGEST_DRAFT') return
+    const { source_name, mode, date, content } = event.data.payload || {}
+    setNewBatch({
+      source: source_name || '',
+      date: date || new Date().toISOString().split('T')[0],
+      mode: (mode as IngestionMode) || 'terry',
+      content: content || ''
+    })
+    setShowIngestModal(true)
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('message', receiveExtensionDraft)
+    return () => window.removeEventListener('message', receiveExtensionDraft)
+  }, [receiveExtensionDraft])
 
   const handleRollback = async () => {
     if (!selectedBatchId) return
