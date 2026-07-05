@@ -187,7 +187,7 @@ export const intelligenceApi = {
     if (!businessId) throw new Error('No partner profile')
 
     try {
-      return await apiRequest(`/analytics/partner-intelligence?businessId=${businessId}`)
+      return await apiRequest(`/analytics/partner-intelligence?entity_id=${businessId}`)
     } catch (e) {
       console.error('[INTELLIGENCE_ERROR]', e)
       // Mock data for development if AE endpoint is not yet ready/implemented
@@ -216,7 +216,7 @@ export const conversionApi = {
     if (!businessId) throw new Error('No partner profile')
 
     try {
-      return await apiRequest(`/analytics/partner-intelligence?businessId=${businessId}`)
+      return await apiRequest(`/analytics/partner-intelligence?entity_id=${businessId}`)
     } catch (e) {
       console.error('[CONVERSIONS_ERROR]', e)
       return {
@@ -272,6 +272,53 @@ export const organizationApi = {
       .limit(1)
 
     return partners?.[0]?.business_id || null
+  },
+
+  // Best-effort: reads the partner's fixed business type(s) so the dashboard can default to
+  // the right context instead of an arbitrary toggle. A business can be more than one thing
+  // (a hotel that also runs a restaurant and hosts events), so this returns every type that
+  // applies, unioned together — not just one.
+  //
+  // Tries the new `business_types` array column first (see
+  // supabase/migrations/20260705_business_types_array.sql — needs to be run manually, this
+  // repo has no DB write access). Falls back to the legacy single-value `business_type`
+  // column so this works today, before that migration exists. Returns [] on any failure
+  // rather than throwing — this must never break page rendering, it's a nice-to-have default.
+  async getPartnerBusinessTypes(): Promise<string[]> {
+    const supabase = createClient()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return []
+
+      const multi = await supabase
+        .from('partners')
+        .select('businesses(business_types)')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle()
+
+      if (!multi.error && multi.data) {
+        const biz = (multi.data as any).businesses
+        const types = Array.isArray(biz) ? biz[0]?.business_types : biz?.business_types
+        if (Array.isArray(types) && types.length > 0) return types
+      }
+
+      const single = await supabase
+        .from('partners')
+        .select('businesses(business_type)')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle()
+
+      if (single.error || !single.data) return []
+      const biz = (single.data as any).businesses
+      const type = Array.isArray(biz) ? biz[0]?.business_type : biz?.business_type
+      return type ? [type] : []
+    } catch {
+      return []
+    }
   },
 
   async getAllPartners(isSuperAdmin?: boolean) {
