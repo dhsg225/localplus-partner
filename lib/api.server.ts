@@ -187,7 +187,7 @@ export const intelligenceApi = {
     if (!businessId) throw new Error('No partner profile')
 
     try {
-      return await apiRequest(`/analytics/partner-intelligence?entity_id=${businessId}`)
+      return await aeRequest(`/analytics/partner-intelligence?entity_id=${businessId}`)
     } catch (e) {
       console.error('[INTELLIGENCE_ERROR]', e)
       // Mock data for development if AE endpoint is not yet ready/implemented
@@ -216,7 +216,7 @@ export const conversionApi = {
     if (!businessId) throw new Error('No partner profile')
 
     try {
-      return await apiRequest(`/analytics/partner-intelligence?entity_id=${businessId}`)
+      return await aeRequest(`/analytics/partner-intelligence?entity_id=${businessId}`)
     } catch (e) {
       console.error('[CONVERSIONS_ERROR]', e)
       return {
@@ -239,7 +239,7 @@ export const pricingApi = {
     if (!businessId) throw new Error('No partner profile')
 
     try {
-      return await apiRequest(`/analytics/pricing?entity_id=${businessId}`)
+      return await aeRequest(`/analytics/pricing?entity_id=${businessId}`)
     } catch (e) {
       return {
         multiplier: 1.0,
