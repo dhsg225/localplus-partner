@@ -102,11 +102,15 @@ const IngestionDashboard = ({ organizationId, initialBatches }: { organizationId
   const handleUpdate = async (id: string, updates: Partial<QueueItem>) => {
     setQueue(prev => prev.map(q => q.id === id ? { ...q, ...updates } : q))
     try {
-      await fetch('/api/data-ingest', {
+      const res = await fetch('/api/data-ingest', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ endpoint: 'update-row', id, updates })
       })
+      const json = await res.json()
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || `Save failed (${res.status})`)
+      }
     } catch (err: any) {
       alert(`Failed to save: ${err.message}`)
     }
