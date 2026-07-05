@@ -1,26 +1,14 @@
-import { createClient } from './supabase/client'
+// [2024-04-13] - API gatekeeper enforcement: removed direct Supabase client.
+// All requests now route through local /api proxy which injects tokens.
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.localplus.city'
+const API_BASE_URL = ''
 
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  const token = session?.access_token
-
   const url = `${API_BASE_URL}${endpoint}`
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
     ...((options.headers as any) || {}),
-  }
-
-  // Workaround headers for special endpoints (as seen in legacy ApiService)
-  const isSpecialEndpoint = endpoint.includes('/events/all') || endpoint.includes('/media')
-  if (token && isSpecialEndpoint) {
-    headers['X-User-Token'] = token
-    headers['X-Supabase-Token'] = token
-    headers['X-Original-Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(url, {
@@ -142,6 +130,64 @@ export const eventsApi = {
   }
 }
 
+export const entitiesApi = {
+  async getProfile(entityId: string | null) {
+    if (!entityId) return { success: true, data: null }
+    return apiRequest(`/api/entities/${entityId}`)
+  },
+  async upsertProfile(payload: any) {
+    return apiRequest('/api/entities/upsert', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+  }
+}
+
+export const taxonomyApi = {
+  async getCategories(type: 'cuisine' | 'feature') {
+    return apiRequest(`/api/categories?type=${type}`)
+  }
+}
+
+export const intelligenceApi = {
+  async getMetrics() {
+    return apiRequest('/api/partner/intelligence')
+  }
+}
+
+export const searchApi = {
+  async query(prompt: string, sessionId: string) {
+    return apiRequest('/api/public/query', {
+      method: 'POST',
+      body: JSON.stringify({ prompt, session_id: sessionId })
+    })
+  },
+  async trackClick(entityId: string, sessionId: string) {
+    return apiRequest('/api/public/click', {
+      method: 'POST',
+      body: JSON.stringify({ entity_id: entityId, session_id: sessionId })
+    })
+  },
+  async trackAction(entityId: string, sessionId: string, actionType: string) {
+    return apiRequest('/api/public/conversion', {
+      method: 'POST',
+      body: JSON.stringify({ entity_id: entityId, session_id: sessionId, action: actionType })
+    })
+  }
+}
+
+export const conversionApi = {
+  async getConversions() {
+    return apiRequest('/api/partner/conversions')
+  }
+}
+
+export const pricingApi = {
+  async getPricing() {
+    return apiRequest('/api/partner/pricing')
+  }
+}
+
 export const aiApi = {
   async getDiscovery(organizationId: string) {
     return apiRequest(`/api/ai/discovery?organizationId=${organizationId}`)
@@ -150,55 +196,24 @@ export const aiApi = {
 
 export const organizationApi = {
   async getPartnerBusiness() {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
-
-    const { data: partners } = await supabase
-      .from('partners')
-      .select('business_id')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .limit(1)
-
-    return partners?.[0]?.business_id || null
+    try {
+      const res = await apiRequest('/api/partners/me')
+      return res.business_id
+    } catch (e) {
+      return null
+    }
   },
 
   async getAllPartners(isSuperAdmin?: boolean) {
-    const supabase = createClient()
-    
-    let query = supabase
-      .from('partners')
-      .select('*')
-      .is('deleted_at', null)
-      .order('business_name', { ascending: true })
-
-    if (isSuperAdmin === false) {
-       const { data: { user } } = await supabase.auth.getUser()
-       if (user) {
-          query = query.eq('user_id', user.id)
-       }
-    }
-
-    const { data: partners, error } = await query
-    if (error) return []
-    return partners
+    return apiRequest(`/api/partners?isSuperAdmin=${isSuperAdmin}`)
   },
 
   async checkPermissions() {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { isSuperAdmin: false }
-
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .in('role', ['super_admin', 'events_superuser'])
-      .eq('is_active', true)
-
-    return {
-      isSuperAdmin: (roles?.length || 0) > 0
+    try {
+      const res = await apiRequest('/api/roles/me')
+      return { isSuperAdmin: res.isSuperAdmin }
+    } catch (e) {
+      return { isSuperAdmin: false }
     }
   },
 

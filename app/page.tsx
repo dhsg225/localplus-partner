@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import PartnerLandingLegacy from './(landing)/components/PartnerLandingLegacy'
 
@@ -12,8 +12,7 @@ import PartnerLandingLegacy from './(landing)/components/PartnerLandingLegacy'
  * This page replaces all Answer Engine / simulation-focused root overwrites.
  */
 export default async function HomePage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
 
   // If already logged in, go straight to the dash
   if (user) {

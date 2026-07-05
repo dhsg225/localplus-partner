@@ -29,7 +29,9 @@ import {
   Wrench,
   Bell,
   User,
-  Plus
+  Plus,
+  Target,
+  Zap
 } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -92,7 +94,18 @@ const navItems: NavItem[] = [
     isEmoji: true
   },
   { name: 'MICE CLOUD', href: '/mice', icon: Globe, perspectives: ['Global', 'Event Organizer'] },
-  { name: 'BUSINESS DATA', href: '/business', icon: Building2 },
+  { 
+    name: 'BUSINESS DATA', 
+    href: '/business', 
+    icon: Building2,
+    subItems: [
+      { name: 'CANONICAL PROFILE', href: '/business/profile', icon: Building2 },
+      { name: 'PARTNER INTELLIGENCE', href: '/business/intelligence', icon: TrendingUp },
+      { name: 'CONVERSIONS & ROI', href: '/business/conversions', icon: Target },
+      { name: 'GROWTH & BOOST', href: '/business/growth', icon: Zap },
+      { name: 'INGESTION ENGINE', href: '/ingestion', icon: Activity },
+    ]
+  },
   { name: 'LOYALTY', href: '/loyalty', icon: Star, perspectives: ['Global', 'Restaurant', 'Hotel', 'Activities'] },
   { name: 'ADVERTISING', href: '/advertising', icon: Megaphone },
   { name: 'ANALYTICS', href: '/analytics', icon: TrendingUp },

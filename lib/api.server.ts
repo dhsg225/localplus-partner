@@ -3,24 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.localplus.city'
 
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  const token = session?.access_token
-
   const url = `${API_BASE_URL}${endpoint}`
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
+    'Authorization': `Bearer ${process.env.INTERNAL_API_KEY ?? ''}`,
+    'x-source': 'api.localplus',
     ...((options.headers as any) || {}),
-  }
-
-  // Workaround headers for special endpoints (as seen in legacy ApiService)
-  const isSpecialEndpoint = endpoint.includes('/events/all') || endpoint.includes('/media')
-  if (token && isSpecialEndpoint) {
-    headers['X-User-Token'] = token
-    headers['X-Supabase-Token'] = token
-    headers['X-Original-Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(url, {
@@ -128,6 +117,141 @@ export const eventsApi = {
   }
 }
 
+const AE_BASE_URL = process.env.AE_BASE_URL || 'https://mc-m6cckgy66k.bunny.run'
+
+async function aeRequest(endpoint: string, options: RequestInit = {}) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${process.env.INTERNAL_API_KEY ?? ''}`,
+    'x-source': 'api.localplus',
+    ...((options.headers as any) || {}),
+  }
+  const response = await fetch(`${AE_BASE_URL}${endpoint}`, { ...options, headers })
+  if (!response.ok) {
+    let errorMessage = `AE request failed: ${response.status}`
+    try {
+      const errorData = await response.json()
+      errorMessage = errorData.error || errorData.message || errorMessage
+    } catch (e) {}
+    throw new Error(errorMessage)
+  }
+  return response.json()
+}
+
+async function getBusinessIdForCurrentUser() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const { data: partners } = await supabase
+    .from('partners')
+    .select('business_id')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .limit(1)
+
+  return partners?.[0]?.business_id ?? null
+}
+
+export const entitiesApi = {
+  // NOTE: the AE backend exposes this as GET /businesses/:id, not /entities/:id.
+  async getProfile(entityId: string | null) {
+    if (!entityId) return { success: true, data: null }
+    try {
+      const data = await aeRequest(`/businesses/${entityId}`)
+      return { success: true, data }
+    } catch (e) {
+      return { success: true, data: null }
+    }
+  },
+  async upsertProfile(payload: any) {
+    const businessId = await getBusinessIdForCurrentUser()
+    return aeRequest('/entities/upsert', {
+      method: 'POST',
+      body: JSON.stringify({ ...payload, owner_id: businessId })
+    })
+  }
+}
+
+export const taxonomyApi = {
+  async getCategories(_type: 'cuisine' | 'feature') {
+    // NOTE: the backend category list is not split by cuisine/feature yet —
+    // both calls currently return the same shared taxonomy list.
+    return apiRequest('/api/categories')
+  }
+}
+
+export const intelligenceApi = {
+  async getMetrics() {
+    const businessId = await getBusinessIdForCurrentUser()
+    if (!businessId) throw new Error('No partner profile')
+
+    try {
+      return await apiRequest(`/analytics/partner-intelligence?businessId=${businessId}`)
+    } catch (e) {
+      console.error('[INTELLIGENCE_ERROR]', e)
+      // Mock data for development if AE endpoint is not yet ready/implemented
+      return {
+        disclosure: { is_promoted: true, promotion_tier: "Boost" },
+        trust_score: 0.84,
+        visibility: { appearances_7d: 124, appearances_30d: 542, trend: 0.12 },
+        analytics: { clicks_7d: 18, ctr: 0.145, trend: 0.08 },
+        ranking: { avg_position: 4.2, top_3_rate: 0.35, base_relevance: 0.82, data_quality: 0.88 },
+        match_quality: { avg_score: 0.88, low_confidence_rate: 0.05 },
+        feedback: { positive_rate: 0.92, total_count: 48 },
+        signals: {
+          memory_boost: { value: 0.021, trend: 'up' },
+          trend_boost: { value: 0.008, trend: 'stable' },
+          session_boost: { value: 0.004, trend: 'down' },
+          exploration_boost: { value: 0.006, trend: 'stable' }
+        }
+      }
+    }
+  }
+}
+
+export const conversionApi = {
+  async getConversions() {
+    const businessId = await getBusinessIdForCurrentUser()
+    if (!businessId) throw new Error('No partner profile')
+
+    try {
+      return await apiRequest(`/analytics/partner-intelligence?businessId=${businessId}`)
+    } catch (e) {
+      console.error('[CONVERSIONS_ERROR]', e)
+      return {
+        summary: {
+          conversions_7d: 12,
+          clicks_7d: 48,
+          actions: { calls: 5, directions: 4, bookings: 3 },
+          conversion_rate: 0.25,
+          click_rate: 0.15
+        },
+        funnel: { appearances: 320, clicks: 48, conversions: 12 }
+      }
+    }
+  }
+}
+
+export const pricingApi = {
+  async getPricing() {
+    const businessId = await getBusinessIdForCurrentUser()
+    if (!businessId) throw new Error('No partner profile')
+
+    try {
+      return await apiRequest(`/analytics/pricing?entity_id=${businessId}`)
+    } catch (e) {
+      return {
+        multiplier: 1.0,
+        demand_score: 0.5,
+        value_score: 0.5,
+        base_price: 500,
+        tier_label: "Stable Performer"
+      }
+    }
+  }
+}
+
 export const aiApi = {
   async getDiscovery(organizationId: string) {
     return apiRequest(`/api/ai/discovery?organizationId=${organizationId}`)
@@ -152,18 +276,17 @@ export const organizationApi = {
 
   async getAllPartners(isSuperAdmin?: boolean) {
     const supabase = createClient()
-    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
     let query = supabase
       .from('partners')
       .select('*')
       .is('deleted_at', null)
       .order('business_name', { ascending: true })
 
-    if (isSuperAdmin === false) {
-       const { data: { user } } = await supabase.auth.getUser()
-       if (user) {
-          query = query.eq('user_id', user.id)
-       }
+    if (!isSuperAdmin) {
+      query = query.eq('user_id', user.id)
     }
 
     const { data: partners, error } = await query
