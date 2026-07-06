@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.localplus.city'
+// api.localplus.city (Vercel) is being retired for serverless functions in favor of
+// this Bunny Magic Container, which has no function-count ceiling — see
+// localplus-api/CONTAINER.md.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://mc-ucz23e315g.bunny.run'
 
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`
