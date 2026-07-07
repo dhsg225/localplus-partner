@@ -35,6 +35,28 @@ Pick from the top of the active list. Mark status inline when starting/finishing
 - **Role**: Feature Development
 - **Status**: IN PROGRESS
 
+### BL-003 — Decommission localplus-api's Vercel deployment (mobile + admin already repointed; verify and retire) `[S]`
+- **What**: Following D-001 (`DECISIONS.md`). Originally scoped assuming `localplus-mobile` and `localplus-admin` still called `api.localplus.city` live — **re-verified same session and that's wrong**: an initial grep hit was matching explanatory *comments* ("api.localplus.city is being retired..."), not live code. Checked the actual constants:
+  - `localplus-mobile/src/modules/news/services/newsService.ts` + `eventsService.ts`: `NEWS_API_BASE_URL`/`EVENTS_API_BASE_URL` already hardcoded to `https://mc-p1bm8gzkgs.b-cdn.net`. Also: this repo's own last commit today (14:08) is "docs: close BL-031 (news domain, not an external outage) + update BL-039 progress" — another agent independently converged on the same domain question in parallel.
+  - `localplus-admin/src/services/apiService.ts`: `API_BASE_URL` already defaults to `https://mc-p1bm8gzkgs.b-cdn.net`. This repo's last commit today (11:12) is literally "fix: point admin app at the Bunny container instead of api.localplus.city" — already done, by another agent, same day.
+  - `localplus-consumer` and `LocalPlus v2` still default to `api.localplus.city`, but both are legacy/stale (consumer superseded by `localplus-mobile` per existing decision; `v2`'s last commit is 2025-12-08, ~7 months stale) — not production blockers.
+  - `localplus-super-app` (a separate, differently-named repo, Vite-based) still defaults to `api.localplus.city` in live code (`src/core/config/index.ts`, `admin/src/services/apiService.ts`) — but it has **no matching Vercel project** in the account's project list, so nothing evidences it's actually deployed/live. Not treated as a blocker; flagged for a human check since its purpose relative to `localplus-mobile`/`localplus-admin` is unclear.
+  - `localplus-partner` itself: only remaining `api.localplus.city` references are in `old_vite/` (frozen legacy archive, not live code) — confirmed not read at runtime.
+- **Smoke test done (2026-07-06), via curl against `mc-p1bm8gzkgs.b-cdn.net` directly** (no real admin credentials available, so auth-required routes were verified as correctly *reachable and auth-gated*, not full authenticated round-trips):
+  - `GET /api/news/hua-hin?per_page=20&_embed` → 200, real WordPress articles.
+  - `GET /api/news/hua-hin/categories` → 200, real categories.
+  - `GET /api/events?status=published&limit=50` → 200, real event data.
+  - `GET /api/businesses?limit=5` → 401 "Authentication required" (route exists, correctly gated, not a 404).
+  - `POST /api/auth` (bad creds) → 401 "Invalid login credentials" (route exists, correctly rejects).
+  - `GET /api/auth/me` (no token) → 401 "Authorization header required" (route exists, correctly gated).
+  - All match expected behavior — no 404s, no 500s, real data where unauthenticated access is allowed.
+- **Decommission done (2026-07-06, human sign-off given)**: removed the `api.localplus.city` domain assignment from the `localplus-api` Vercel project via the Vercel API (`DELETE /v9/projects/{id}/domains/{domain}` — project-scoped, didn't touch the domain elsewhere). Verified live: the domain now returns `x-vercel-error: DEPLOYMENT_NOT_FOUND` instead of serving the old app. Neutered `localplus-api/package.json`'s `deploy` script (was `npx vercel deploy --prod --yes`, now refuses to run with a pointer to `scripts/deploy-to-bkk.sh`) so nobody redeploys there by accident. Documented in `localplus-api/CONTAINER.md`.
+- **Not done — needs a human, not blocking**: the Cloudflare DNS CNAME for `api.localplus.city` (zone `localplus.city`, nameservers `elijah`/`lilith.ns.cloudflare.com`) still exists pointing at Vercel. It's inert now (harmless 404, not a security or drift risk), but wasn't removed — no Cloudflare credentials for this specific zone were available in-session, and hunting for a token scoped to a different domain wasn't worth the risk. A 30-second manual Cloudflare dashboard cleanup whenever convenient.
+- **Acceptance criteria**: `localplus-mobile` and `localplus-admin` confirmed working end-to-end against Bunny (done, via endpoint-level smoke test); `localplus-api`'s Vercel project retired (done, verified live).
+- **Files**: `localplus-api/package.json`, `localplus-api/CONTAINER.md` (both uncommitted as of this session — human should review + commit).
+- **Role**: Feature Development / Infra
+- **Status**: DONE (Vercel-side); Cloudflare CNAME cleanup left as an optional manual follow-up
+
 ---
 
 ## Future (no scope yet — do not build)
