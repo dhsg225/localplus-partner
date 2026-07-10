@@ -1,8 +1,8 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { bookingsApi } from "@/lib/api"
-import { Calendar, Check, X, UserCheck, RefreshCw, Plus, Clock, Users, Phone, Mail } from "lucide-react"
+import { Calendar, Check, X, UserCheck, RefreshCw, Plus, Clock, Users, Phone, Mail, Pencil, Search } from "lucide-react"
 
 interface Booking {
   id: string
@@ -61,12 +61,14 @@ export default function BookingsDashboard({ initialBookings }: { initialBookings
   const [actionId, setActionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showNewForm, setShowNewForm] = useState(false)
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const refetch = async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await bookingsApi.getBookings({ limit: 200 })
+      const res = await bookingsApi.getBookings({ limit: 200, search: searchTerm || undefined })
       setBookings(Array.isArray(res?.data) ? res.data : [])
     } catch (e: any) {
       setError(e.message || 'Failed to load bookings.')
@@ -74,6 +76,16 @@ export default function BookingsDashboard({ initialBookings }: { initialBookings
       setLoading(false)
     }
   }
+
+  // Re-fetch (debounced) whenever the search term changes — skip the very
+  // first render since initialBookings already covers that.
+  const didMountRef = useRef(false)
+  useEffect(() => {
+    if (!didMountRef.current) { didMountRef.current = true; return }
+    const t = setTimeout(() => { refetch() }, 350)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm])
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
@@ -91,13 +103,24 @@ export default function BookingsDashboard({ initialBookings }: { initialBookings
     return counts
   }, [bookings])
 
+  const todayKey = useMemo(() => toDateKey(new Date()), [])
+  const tomorrowKey = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return toDateKey(d)
+  }, [])
+
   const visibleBookings = useMemo(() => {
-    const filtered = selectedDate ? bookings.filter(b => b.booking_date === selectedDate) : bookings
+    // While searching, `bookings` already holds only the matching results
+    // (search runs server-side across all dates) — the day filter doesn't apply.
+    const filtered = searchTerm
+      ? bookings
+      : selectedDate ? bookings.filter(b => b.booking_date === selectedDate) : bookings
     return [...filtered].sort((a, b) => {
       if (a.booking_date !== b.booking_date) return a.booking_date.localeCompare(b.booking_date)
       return a.booking_time.localeCompare(b.booking_time)
     })
-  }, [bookings, selectedDate])
+  }, [bookings, selectedDate, searchTerm])
 
   const runAction = async (id: string, action: () => Promise<any>) => {
     setActionId(id)
@@ -142,6 +165,19 @@ export default function BookingsDashboard({ initialBookings }: { initialBookings
             </button>
           </div>
           <div className="flex items-center gap-2">
+            <QuickDayButton
+              label="Today"
+              count={countsByDate[todayKey] || 0}
+              active={selectedDate === todayKey}
+              onClick={() => setSelectedDate(prev => prev === todayKey ? null : todayKey)}
+            />
+            <QuickDayButton
+              label="Tomorrow"
+              count={countsByDate[tomorrowKey] || 0}
+              active={selectedDate === tomorrowKey}
+              onClick={() => setSelectedDate(prev => prev === tomorrowKey ? null : tomorrowKey)}
+            />
+            <div className="w-px h-5 bg-gray-200 mx-1" />
             <button
               onClick={refetch}
               disabled={loading}
@@ -160,7 +196,26 @@ export default function BookingsDashboard({ initialBookings }: { initialBookings
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className="relative mb-3">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Search by guest name or phone…"
+            className="w-full pl-8 pr-8 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-500"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+            >
+              <X size={13} />
+            </button>
+          )}
+        </div>
+
+        <div className={`grid grid-cols-7 gap-2 ${searchTerm ? 'opacity-40 pointer-events-none' : ''}`}>
           {weekDays.map(d => {
             const key = toDateKey(d)
             const isToday = key === toDateKey(new Date())
@@ -199,6 +254,18 @@ export default function BookingsDashboard({ initialBookings }: { initialBookings
           onClose={() => setShowNewForm(false)}
           onCreated={async () => {
             setShowNewForm(false)
+            await refetch()
+          }}
+        />
+      )}
+
+      {/* Edit booking form */}
+      {editingBooking && (
+        <EditBookingForm
+          booking={editingBooking}
+          onClose={() => setEditingBooking(null)}
+          onSaved={async () => {
+            setEditingBooking(null)
             await refetch()
           }}
         />
@@ -287,6 +354,13 @@ export default function BookingsDashboard({ initialBookings }: { initialBookings
                 {!['cancelled', 'completed', 'no_show'].includes(booking.status) && (
                   <>
                     <ActionButton
+                      label="Edit"
+                      icon={<Pencil size={13} />}
+                      color="bg-gray-600 hover:bg-gray-700"
+                      disabled={actionId === booking.id}
+                      onClick={() => setEditingBooking(booking)}
+                    />
+                    <ActionButton
                       label="Cancel"
                       icon={<X size={13} />}
                       color="bg-red-600 hover:bg-red-700"
@@ -308,6 +382,31 @@ export default function BookingsDashboard({ initialBookings }: { initialBookings
         </div>
       )}
     </div>
+  )
+}
+
+function QuickDayButton({ label, count, active, onClick }: {
+  label: string
+  count: number
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+        active
+          ? 'bg-brand-500 text-white'
+          : count > 0
+            ? 'bg-brand-50 text-brand-700 hover:bg-brand-100'
+            : 'text-gray-500 hover:bg-gray-100'
+      }`}
+    >
+      {label}
+      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${active ? 'bg-white/20' : 'bg-white/60'}`}>
+        {count}
+      </span>
+    </button>
   )
 }
 
@@ -407,6 +506,89 @@ function NewBookingForm({ onClose, onCreated }: { onClose: () => void; onCreated
         </button>
         <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50">
           {saving ? 'Saving…' : 'Create booking'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function EditBookingForm({ booking, onClose, onSaved }: { booking: Booking; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    customer_name: booking.customer_name,
+    customer_email: booking.customer_email,
+    customer_phone: booking.customer_phone,
+    party_size: booking.party_size,
+    booking_date: booking.booking_date,
+    booking_time: booking.booking_time,
+    special_requests: booking.special_requests || '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+    try {
+      const res = await bookingsApi.updateBooking(booking.id, form)
+      if (res?.success === false) throw new Error(res.error || 'Failed to save changes.')
+      onSaved()
+    } catch (e: any) {
+      setError(e.message || 'Failed to save changes.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-card space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-gray-900">Edit booking</h3>
+        <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-700">
+          <X size={16} />
+        </button>
+      </div>
+
+      {error && <p className="text-xs font-medium text-red-600">{error}</p>}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field label="Customer name" required>
+          <input required value={form.customer_name} onChange={e => setForm(f => ({ ...f, customer_name: e.target.value }))}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-500" />
+        </Field>
+        <Field label="Phone" required>
+          <input required value={form.customer_phone} onChange={e => setForm(f => ({ ...f, customer_phone: e.target.value }))}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-500" />
+        </Field>
+        <Field label="Email" required>
+          <input required type="email" value={form.customer_email} onChange={e => setForm(f => ({ ...f, customer_email: e.target.value }))}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-500" />
+        </Field>
+        <Field label="Party size" required>
+          <input required type="number" min={1} value={form.party_size} onChange={e => setForm(f => ({ ...f, party_size: parseInt(e.target.value, 10) || 1 }))}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-500" />
+        </Field>
+        <Field label="Date" required>
+          <input required type="date" value={form.booking_date} onChange={e => setForm(f => ({ ...f, booking_date: e.target.value }))}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-500" />
+        </Field>
+        <Field label="Time" required>
+          <input required type="time" value={form.booking_time} onChange={e => setForm(f => ({ ...f, booking_time: e.target.value }))}
+            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-500" />
+        </Field>
+      </div>
+
+      <Field label="Special requests">
+        <textarea value={form.special_requests} onChange={e => setForm(f => ({ ...f, special_requests: e.target.value }))}
+          rows={2} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-brand-500" />
+      </Field>
+
+      <div className="flex justify-end gap-2 pt-1">
+        <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-100">
+          Cancel
+        </button>
+        <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg text-xs font-semibold bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50">
+          {saving ? 'Saving…' : 'Save changes'}
         </button>
       </div>
     </form>

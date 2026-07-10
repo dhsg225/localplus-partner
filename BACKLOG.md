@@ -57,6 +57,32 @@ Pick from the top of the active list. Mark status inline when starting/finishing
 - **Role**: Feature Development / Infra
 - **Status**: DONE (Vercel-side); Cloudflare CNAME cleanup left as an optional manual follow-up
 
+### BL-004 — Edit-booking UI `[M]`
+- **What**: `BookingsDashboard.tsx` only has status-transition actions (Confirm/Seat/Complete/Cancel/No-show) — no way to change a booking's time/party size/details without cancelling and recreating it, which loses the original record's continuity. The backend endpoint this would call (`PUT /api/bookings/:id`, general-update branch) already exists but currently accepts an unvalidated body — do not build this UI against it until `localplus-api` BL-002 lands, or the UI will be able to write invalid bookings straight past every check `POST` enforces.
+- **Acceptance criteria**: an "Edit" action on non-terminal bookings (not cancelled/completed/no_show) opens a form pre-filled with current values, submits via a new `app/api/bookings/[id]/route.ts` `PUT` proxy (doesn't exist yet — only `cancel`/`confirm` proxies exist today), and only after `localplus-api` BL-002's validation is in place.
+- **Files**: `app/(dashboard)/bookings/components/BookingsDashboard.tsx`, new `app/api/bookings/[id]/route.ts` (PUT), `lib/api.ts`/`lib/api.server.ts`
+- **Blocker**: `localplus-api` BL-002 (validation on the underlying endpoint) must land first.
+- **Done (2026-07-08), after localplus-api BL-002 landed**: the `PUT` proxy at `app/api/bookings/[id]/route.ts` turned out to already exist (with ownership verification — confirms the booking belongs to the caller's business before forwarding), so only `lib/api.ts`'s `updateBooking(id, payload)` and the UI needed building. Added an "Edit" action (pencil icon) alongside Cancel/No-show on non-terminal bookings, opening `EditBookingForm` (mirrors `NewBookingForm`, pre-filled, submits via `updateBooking`). Verified: `npx tsc --noEmit` clean.
+- **Files**: `app/(dashboard)/bookings/components/BookingsDashboard.tsx`, `lib/api.ts` (proxy route already existed)
+- **Role**: Feature Development
+- **Status**: DONE
+
+### BL-005 — Search bookings by customer name/phone `[S]`
+- **What**: `BookingsDashboard.tsx` is purely date-filtered — no text search. Fine at low volume; breaks down once staff need to find a specific guest's booking without knowing which day it's on.
+- **Acceptance criteria**: a search input above the booking list filters by customer name/phone, calling `localplus-api` BL-003's new `search` query param (client-side filtering of the currently-loaded 200-booking window is an acceptable interim step if the backend param isn't ready yet, but should be replaced once it is — client-side filtering doesn't scale past the `limit: 200` fetch).
+- **Done (2026-07-08)**: `localplus-api` BL-003 landed in the same batch of work, so built straight against the real backend param rather than the interim client-side version. Added a search input in the week-strip card (dims the day-grid while active, since search runs across all dates and the day filter doesn't apply during it), a `search` param threaded through `app/api/bookings/route.ts` → `lib/api.ts`'s `getBookings`, and a 350ms-debounced re-fetch on `searchTerm` change (skips firing on initial mount since `initialBookings` already covers that).
+- **Files**: `app/(dashboard)/bookings/components/BookingsDashboard.tsx`, `app/api/bookings/route.ts`, `lib/api.ts`
+- **Role**: Feature Development
+- **Status**: DONE
+
+### BL-006 — Booking rules settings page `[M]`
+- **What**: `restaurant_settings` (booking on/off, min/max party size, advance-booking window) is enforced server-side but has no admin surface in this app at all — confirmed no matching file anywhere in `app/`. Closing bookings for a holiday or adjusting party-size limits currently requires hand-editing the database directly.
+- **Acceptance criteria**: a settings section (new page, or a section on an existing settings page if one exists) lets a partner view and update their `restaurant_settings` row, calling `localplus-api` BL-005's new endpoint.
+- **Done (2026-07-08)**: new page at `/bookings/settings` (`app/(dashboard)/bookings/settings/`), linked from a "Booking rules" button in the Bookings page header. SSR initial load via a new `restaurantSettingsApi.getSettings()` in `lib/api.server.ts`; client-side `BookingSettingsForm` (toggle for `booking_enabled`, number fields for party-size min/max and advance-booking days, inline min>max validation) saves via a new `restaurantSettingsApi.updateSettings()` in `lib/api.ts`. New proxy `app/api/restaurant-settings/route.ts` (GET/PUT) resolves `business_id` server-side from the session, same pattern as the bookings proxy — never trusts a client-supplied business_id. Verified: `npx tsc --noEmit` clean; confirmed live against the locally-booted backend that GET returns sane defaults for a business with no settings row yet.
+- **Files**: `app/(dashboard)/bookings/settings/page.tsx`, `app/(dashboard)/bookings/settings/components/BookingSettingsForm.tsx`, `app/api/restaurant-settings/route.ts`, `app/(dashboard)/bookings/page.tsx`, `lib/api.ts`, `lib/api.server.ts`
+- **Role**: Feature Development
+- **Status**: DONE
+
 ---
 
 ## Future (no scope yet — do not build)

@@ -384,6 +384,15 @@ export const bookingsApi = {
   }
 }
 
+export const restaurantSettingsApi = {
+  async getSettings() {
+    const businessId = await getBusinessIdForCurrentUser()
+    if (!businessId) return { success: true, data: null }
+
+    return apiRequest(`/api/restaurant-settings?businessId=${businessId}`)
+  }
+}
+
 export const ingestionApi = {
   async getBatches(organizationId: string) {
     return apiRequest(`/api/data-ingest?endpoint=batches&organizationId=${organizationId}`)

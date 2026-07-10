@@ -227,11 +227,12 @@ export const organizationApi = {
 }
 
 export const bookingsApi = {
-  async getBookings(params: { status?: string; limit?: number; offset?: number } = {}) {
+  async getBookings(params: { status?: string; limit?: number; offset?: number; search?: string } = {}) {
     const searchParams = new URLSearchParams()
     if (params.status) searchParams.set('status', params.status)
     if (params.limit) searchParams.set('limit', String(params.limit))
     if (params.offset) searchParams.set('offset', String(params.offset))
+    if (params.search) searchParams.set('search', params.search)
     const query = searchParams.toString()
     return apiRequest(`/api/bookings${query ? `?${query}` : ''}`)
   },
@@ -280,6 +281,39 @@ export const bookingsApi = {
     return apiRequest(`/api/bookings/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ status: 'no_show' })
+    })
+  },
+
+  async updateBooking(id: string, payload: Partial<{
+    customer_name: string
+    customer_email: string
+    customer_phone: string
+    party_size: number
+    booking_date: string
+    booking_time: string
+    special_requests: string
+  }>) {
+    return apiRequest(`/api/bookings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    })
+  }
+}
+
+export const restaurantSettingsApi = {
+  async getSettings() {
+    return apiRequest('/api/restaurant-settings')
+  },
+
+  async updateSettings(payload: Partial<{
+    booking_enabled: boolean
+    min_party_size: number
+    max_party_size: number
+    advance_booking_days: number
+  }>) {
+    return apiRequest('/api/restaurant-settings', {
+      method: 'PUT',
+      body: JSON.stringify(payload)
     })
   }
 }
