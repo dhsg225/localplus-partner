@@ -16,6 +16,16 @@ interface IngestionBatch {
 
 type IngestionMode = 'terry' | 'facebook' | 'ocr' | 'manual'
 
+// global_date is a plain "YYYY-MM-DD" string (the content date, set when the
+// intake was created — not the same as created_at, which is when it was
+// ingested). Parsed from explicit y/m/d components, not `new Date(str)`, so
+// it can't shift a day off in either direction depending on local timezone.
+function formatContentDate(dateStr: string) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  if (!y || !m || !d) return dateStr
+  return new Date(y, m - 1, d).toLocaleDateString()
+}
+
 // Mock Queue Item interface
 interface QueueItem {
   id: string
@@ -243,8 +253,10 @@ const IngestionDashboard = ({ organizationId, initialBatches }: { organizationId
                 <span className={`text-[8px] font-black uppercase px-2 py-1 rounded-lg ${b.mode === 'ocr' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>{b.mode}</span>
                 <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-full ${b.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{b.status}</span>
               </div>
-              <h4 className="text-sm font-black text-gray-900 leading-tight mb-1">{b.source_name}</h4>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{new Date(b.created_at).toLocaleDateString()} • {b.total_items} Items</p>
+              <h4 className="text-sm font-black text-gray-900 leading-tight mb-1">
+                {b.source_name}{b.global_date && <span className="text-gray-400"> — {formatContentDate(b.global_date)}</span>}
+              </h4>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Ingested {new Date(b.created_at).toLocaleDateString()} • {b.total_items} Items</p>
             </div>
           ))}
         </div>
@@ -255,7 +267,11 @@ const IngestionDashboard = ({ organizationId, initialBatches }: { organizationId
         {/* Header Controls */}
         <div className="p-8 border-b border-gray-100 bg-white flex items-center justify-between sticky top-0 z-10 shadow-sm">
           <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-black italic tracking-tighter text-gray-900">{selectedBatch?.source_name} <span className="text-gray-300">Ops</span></h2>
+            <h2 className="text-2xl font-black italic tracking-tighter text-gray-900">
+              {selectedBatch?.source_name}
+              {selectedBatch?.global_date && <span className="text-gray-300"> — {formatContentDate(selectedBatch.global_date)}</span>}
+              {' '}<span className="text-gray-300">Ops</span>
+            </h2>
             <div className="flex bg-gray-100 p-1 rounded-2xl ml-4">
                <button onClick={() => setMode('grouped')} className={`px-4 py-2 rounded-xl text-[10px] font-black flex items-center gap-2 transition-all ${mode === 'grouped' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}><LayoutGrid size={12} /> CLUSTERS</button>
                <button onClick={() => setMode('table')} className={`px-4 py-2 rounded-xl text-[10px] font-black flex items-center gap-2 transition-all ${mode === 'table' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-black'}`}><LayoutList size={12} /> ROWS</button>
